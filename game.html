@@ -15,69 +15,67 @@
             height: 100vh;
             margin: 0;
             user-select: none;
+            overflow: hidden;
         }
 
         #game-container {
             text-align: center;
-            background: white;
-            padding: 2.5rem;
-            border-radius: 40px;
-            box-shadow: 0 15px 0px #ffcc00;
+            background: #ffffff;
+            padding: 3rem;
+            border-radius: 50px;
+            box-shadow: 0 20px 0px #ffcc00;
             border: 4px solid #333;
         }
 
-        /* The Main Clickable Item */
         #smiley {
             font-size: 120px;
             cursor: pointer;
-            transition: transform 0.1s;
+            transition: transform 0.05s;
             display: inline-block;
             margin: 20px 0;
         }
 
         #smiley:active {
-            transform: scale(1.2) rotate(10deg);
+            transform: scale(1.3) rotate(-10deg);
         }
 
         .stats {
             font-size: 2rem;
             margin: 10px 0;
-            font-weight: bold;
             color: #ff6600;
         }
 
         #gps-display {
             font-size: 1.1rem;
-            color: #777;
+            color: #666;
             margin-bottom: 20px;
         }
 
         button {
-            padding: 12px 24px;
-            font-size: 1.1rem;
+            padding: 15px 25px;
+            font-size: 1.2rem;
             background-color: #4caf50;
             color: white;
             border: none;
-            border-bottom: 4px solid #2e7d32;
-            border-radius: 12px;
+            border-bottom: 5px solid #2e7d32;
+            border-radius: 15px;
             cursor: pointer;
             font-family: inherit;
         }
 
         button:active {
-            border-bottom: 1px solid #2e7d32;
+            border-bottom: 2px solid #2e7d32;
             transform: translateY(3px);
         }
 
         button:disabled {
             background-color: #ccc;
-            border-bottom: 4px solid #999;
+            border-bottom: 5px solid #999;
             cursor: not-allowed;
         }
 
         .upgrade-section {
             margin-top: 20px;
-            border-top: 2px dashed #ddd;
             padding-top: 20px;
         }
     </style>
@@ -86,14 +84,12 @@
 
     <div id="game-container">
         <h1>Silly Clicker</h1>
-        
         <div id="smiley">😊</div>
-        
         <div class="stats"><span id="score">0</span> Giggles</div>
         <div id="gps-display">Giggles Per Second: 0</div>
 
         <div class="upgrade-section">
-            <p>Get a <strong>Tickle Feather</strong></p>
+            <p>Buy a <strong>Tickle Feather</strong></p>
             <button id="buy-upgrade">Cost: 15 Giggles</button>
         </div>
     </div>
@@ -112,18 +108,35 @@
         smiley.addEventListener('click', () => {
             giggles++;
             updateDisplay();
+            // Randomly change the face for a split second
+            const faces = ['😂', '🤣', '😸', '😊'];
+            const randomFace = faces[Math.floor(Math.random() * faces.length)];
+            smiley.innerText = randomFace;
+            setTimeout(() => { smiley.innerText = '😊'; }, 150);
         });
 
-        // Buy an upgrade
+        // Buy a Tickler
         upgradeBtn.addEventListener('click', () => {
             if (giggles >= upgradeCost) {
                 giggles -= upgradeCost;
                 ticklers++;
-                upgradeCost = Math.floor(upgradeCost * 1.5);
+                upgradeCost = Math.round(upgradeCost * 1.4);
                 updateDisplay();
             }
         });
 
-        // Passive Income Loop
+        // Passive Giggles logic
         setInterval(() => {
-            giggles
+            giggles += ticklers;
+            updateDisplay();
+        }, 1000);
+
+        function updateDisplay() {
+            scoreDisplay.innerText = giggles;
+            gpsDisplay.innerText = `Giggles Per Second: ${ticklers}`;
+            upgradeBtn.innerText = `Cost: ${upgradeCost} Giggles`;
+            upgradeBtn.disabled = giggles < upgradeCost;
+        }
+    </script>
+</body>
+</html>
