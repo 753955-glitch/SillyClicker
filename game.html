@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rubber Chicken Chaos</title>
+    <title>Silly Clicker</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f8ff;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+            background-color: #fff4e6;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -15,56 +15,67 @@
             height: 100vh;
             margin: 0;
             user-select: none;
+            overflow: hidden;
         }
 
         #game-container {
             text-align: center;
-            background: white;
-            padding: 2rem;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            background: #ffffff;
+            padding: 3rem;
+            border-radius: 50px;
+            box-shadow: 0 20px 0px #ffcc00;
+            border: 4px solid #333;
         }
 
-        #chicken {
-            font-size: 100px;
+        #smiley {
+            font-size: 120px;
             cursor: pointer;
-            transition: transform 0.1s;
+            transition: transform 0.05s;
             display: inline-block;
+            margin: 20px 0;
         }
 
-        #chicken:active {
-            transform: scale(0.8) rotate(15deg);
+        #smiley:active {
+            transform: scale(1.3) rotate(-10deg);
         }
 
         .stats {
-            font-size: 1.5rem;
-            margin: 1rem 0;
-            font-weight: bold;
-            color: #333;
+            font-size: 2rem;
+            margin: 10px 0;
+            color: #ff6600;
+        }
+
+        #gps-display {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 20px;
         }
 
         button {
-            padding: 10px 20px;
-            font-size: 1rem;
-            background-color: #ffcc00;
+            padding: 15px 25px;
+            font-size: 1.2rem;
+            background-color: #4caf50;
+            color: white;
             border: none;
-            border-radius: 5px;
+            border-bottom: 5px solid #2e7d32;
+            border-radius: 15px;
             cursor: pointer;
-            transition: background 0.2s;
+            font-family: inherit;
+        }
+
+        button:active {
+            border-bottom: 2px solid #2e7d32;
+            transform: translateY(3px);
         }
 
         button:disabled {
             background-color: #ccc;
+            border-bottom: 5px solid #999;
             cursor: not-allowed;
-        }
-
-        button:hover:not(:disabled) {
-            background-color: #ffaa00;
         }
 
         .upgrade-section {
             margin-top: 20px;
-            border-top: 2px solid #eee;
             padding-top: 20px;
         }
     </style>
@@ -72,55 +83,55 @@
 <body>
 
     <div id="game-container">
-        <h1>Rubber Chicken Chaos</h1>
-        <div id="chicken">🍗</div>
-        <div class="stats">Squeaks: <span id="score">0</span></div>
-        <div id="sps-display">Squeaks Per Second: 0</div>
+        <h1>Silly Clicker</h1>
+        <div id="smiley">😊</div>
+        <div class="stats"><span id="score">0</span> Giggles</div>
+        <div id="gps-display">Giggles Per Second: 0</div>
 
         <div class="upgrade-section">
-            <p>Hire a <strong>Cluck-bot</strong></p>
-            <button id="buy-upgrade">Cost: 10 Squeaks</button>
+            <p>Buy a <strong>Tickle Feather</strong></p>
+            <button id="buy-upgrade">Cost: 15 Giggles</button>
         </div>
     </div>
 
     <script>
-        let squeaks = 0;
-        let cluckBots = 0;
-        let botCost = 10;
+        let giggles = 0;
+        let ticklers = 0;
+        let upgradeCost = 15;
 
         const scoreDisplay = document.getElementById('score');
-        const spsDisplay = document.getElementById('sps-display');
-        const chicken = document.getElementById('chicken');
+        const gpsDisplay = document.getElementById('gps-display');
+        const smiley = document.getElementById('smiley');
         const upgradeBtn = document.getElementById('buy-upgrade');
 
-        // Click the chicken
-        chicken.addEventListener('click', () => {
-            squeaks++;
+        // Click the smiley
+        smiley.addEventListener('click', () => {
+            giggles++;
             updateDisplay();
+            // Randomly change the face for a split second
+            const faces = ['😂', '🤣', '😸', '😊'];
+            const randomFace = faces[Math.floor(Math.random() * faces.length)];
+            smiley.innerText = randomFace;
+            setTimeout(() => { smiley.innerText = '😊'; }, 150);
         });
 
-        // Buy an upgrade
+        // Buy a Tickler
         upgradeBtn.addEventListener('click', () => {
-            if (squeaks >= botCost) {
-                squeaks -= botCost;
-                cluckBots++;
-                botCost = Math.floor(botCost * 1.5); // Price increases
+            if (giggles >= upgradeCost) {
+                giggles -= upgradeCost;
+                ticklers++;
+                upgradeCost = Math.round(upgradeCost * 1.4);
                 updateDisplay();
             }
         });
 
-        // Game Loop (Runs every second)
+        // Passive Giggles logic
         setInterval(() => {
-            squeaks += cluckBots;
+            giggles += ticklers;
             updateDisplay();
         }, 1000);
 
         function updateDisplay() {
-            scoreDisplay.innerText = squeaks;
-            spsDisplay.innerText = `Squeaks Per Second: ${cluckBots}`;
-            upgradeBtn.innerText = `Cost: ${botCost} Squeaks`;
-            upgradeBtn.disabled = squeaks < botCost;
-        }
-    </script>
-</body>
-</html>
+            scoreDisplay.innerText = giggles;
+            gpsDisplay.innerText = `Giggles Per Second: ${ticklers}`;
+            upgradeBtn.innerText = `Cost: ${upgradeCost}
