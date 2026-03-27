@@ -1,1 +1,1 @@
-# Jump King
+# Silly Clicker
