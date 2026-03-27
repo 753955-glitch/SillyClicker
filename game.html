@@ -1,303 +1,122 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Chaos Clicker ⚡</title>
+import pygame
+import sys
 
-<style>
-body {
-    font-family: Arial;
-    text-align: center;
-    background: linear-gradient(to right, #1e1e2f, #2c2c54);
-    color: white;
-    user-select: none;
-}
+# Initialize Pygame
+pygame.init()
 
-#orb {
-    font-size: 100px;
-    cursor: pointer;
-    margin: 20px;
-}
+# Screen settings
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("2D Parkour Game")
 
-.tabs button {
-    margin: 5px;
-    padding: 8px;
-    cursor: pointer;
-}
+# Clock for FPS
+clock = pygame.time.Clock()
+FPS = 60
 
-/* SHOP */
-.shopTab {
-    display: none;
-    width: 320px;
-    height: 260px;
-    margin: auto;
-    overflow-y: auto;
-    border: 2px solid #555;
-    border-radius: 10px;
-    background: #222;
-}
+# Colors
+WHITE = (255, 255, 255)
+BLUE = (0, 102, 255)
+GREEN = (0, 200, 0)
+RED = (255, 0, 0)
+BLACK = (0, 0, 0)
 
-.upgrade {
-    background: #444;
-    margin: 8px;
-    padding: 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-.upgrade:hover { background: #666; }
+# Player settings
+player_width, player_height = 50, 50
+player_x, player_y = 100, HEIGHT - player_height - 50
+player_vel_x = 5
+player_vel_y = 0
+jump_power = 12
+gravity = 0.6
+on_ground = False
 
-/* FLOAT */
-.float {
-    position: absolute;
-    color: yellow;
-    animation: floatUp 1s forwards;
-}
-@keyframes floatUp {
-    to { transform: translateY(-60px); opacity: 0; }
-}
+# Level structure: list of platforms (x, y, width, height)
+levels = [
+    # Level 1
+    [(0, HEIGHT-50, WIDTH, 50), (300, HEIGHT-150, 100, 20)],
+    # Level 2
+    [(0, HEIGHT-50, WIDTH, 50), (200, HEIGHT-120, 100, 20), (400, HEIGHT-200, 150, 20)],
+    # Level 3
+    [(0, HEIGHT-50, WIDTH, 50), (150, HEIGHT-100, 50, 20), (300, HEIGHT-150, 100, 20), (500, HEIGHT-200, 150, 20)],
+    # Level 4-15 just progressively add more platforms and height
+]
 
-/* GOLDEN */
-#golden {
-    position: absolute;
-    font-size: 60px;
-    display: none;
-    cursor: pointer;
-}
-</style>
-</head>
+# Generate levels 4-15 programmatically
+for i in range(4, 16):
+    platforms = [(0, HEIGHT-50, WIDTH, 50)]
+    for j in range(1, i + 3):
+        platforms.append((j*100 % 700, HEIGHT-50-j*30, 80, 20))
+    levels.append(platforms)
 
-<body>
+current_level = 0
+platforms = levels[current_level]
 
-<h1>Chaos Clicker ⚡</h1>
+# Game loop
+running = True
+while running:
+    clock.tick(FPS)
+    screen.fill(WHITE)
 
-<div id="score"></div>
-<div id="eps"></div>
-<div id="prestige"></div>
+    # Event handling
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
 
-<div id="orb">⚡</div>
-<div id="golden">🌟</div>
+    # Key presses
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:
+        player_x -= player_vel_x
+    if keys[pygame.K_RIGHT]:
+        player_x += player_vel_x
+    if keys[pygame.K_SPACE] and on_ground:
+        player_vel_y = -jump_power
+        on_ground = False
 
-<div class="tabs">
-<button onclick="openTab('buildings')">🏭 Buildings</button>
-<button onclick="openTab('upgrades')">⬆️ Upgrades</button>
-<button onclick="openTab('special')">✨ Special</button>
-</div>
+    # Apply gravity
+    player_vel_y += gravity
+    player_y += player_vel_y
 
-<!-- BUILDINGS -->
-<div id="buildings" class="shopTab">
-<div class="upgrade" onclick="buyGen()">Generator (<span id="genCost"></span>)</div>
-<div class="upgrade" id="factoryBox" onclick="buyFactory()" style="display:none;">Factory (<span id="facCost"></span>)</div>
-</div>
+    # Platform collision
+    on_ground = False
+    player_rect = pygame.Rect(player_x, player_y, player_width, player_height)
+    for plat in platforms:
+        plat_rect = pygame.Rect(*plat)
+        if player_rect.colliderect(plat_rect) and player_vel_y >= 0:
+            player_y = plat[1] - player_height
+            player_vel_y = 0
+            on_ground = True
 
-<!-- UPGRADES -->
-<div id="upgrades" class="shopTab">
-<div class="upgrade" onclick="buyClick()">Click Power (<span id="clickCost"></span>)</div>
-</div>
+    # Draw platforms
+    for plat in platforms:
+        pygame.draw.rect(screen, GREEN, plat)
 
-<!-- SPECIAL -->
-<div id="special" class="shopTab">
-<div class="upgrade" onclick="prestigeReset()">🌌 Prestige</div>
-<div class="upgrade" onclick="resetGame()">⚠️ Reset</div>
-</div>
+    # Draw player
+    pygame.draw.rect(screen, BLUE, (player_x, player_y, player_width, player_height))
 
-<h3>Achievements</h3>
-<div id="achievements"></div>
+    # Check if player reached end of level
+    if player_x > WIDTH:
+        current_level += 1
+        if current_level >= len(levels):
+            font = pygame.font.SysFont(None, 60)
+            text = font.render("You Win!", True, RED)
+            screen.blit(text, (WIDTH//2-100, HEIGHT//2))
+            pygame.display.update()
+            pygame.time.delay(3000)
+            running = False
+        else:
+            platforms = levels[current_level]
+            player_x = 50
+            player_y = HEIGHT - player_height - 50
+            player_vel_y = 0
 
-<script>
-// ===== DATA =====
-let energy = 0, totalEnergy = 0;
-let clickPower = 1, generators = 0, factories = 0;
-let prestige = 1;
+    # Keep player in screen bounds
+    if player_x < 0:
+        player_x = 0
+    if player_y > HEIGHT:
+        player_y = HEIGHT - player_height
+        player_vel_y = 0
+        on_ground = True
 
-let genCost = 50, facCost = 250, clickCost = 25;
-let achieved = [];
+    pygame.display.update()
 
-// ===== SAFE SOUND =====
-function playSound(url){
-    try{
-        let s=new Audio(url);
-        s.volume=0.2;
-        s.play().catch(()=>{});
-    }catch{}
-}
-
-// ===== CORE =====
-function getEPS(){
-    return (generators + factories*5) * prestige;
-}
-
-function update(){
-    document.getElementById("score").innerText = "Energy: " + Math.floor(energy);
-    document.getElementById("eps").innerText = "EPS: " + getEPS();
-    document.getElementById("prestige").innerText = "Prestige x" + prestige;
-
-    document.getElementById("genCost").innerText = Math.floor(genCost);
-    document.getElementById("facCost").innerText = Math.floor(facCost);
-    document.getElementById("clickCost").innerText = Math.floor(clickCost);
-
-    // unlock factory
-    if(totalEnergy >= 500){
-        document.getElementById("factoryBox").style.display = "block";
-    }
-
-    checkAchievements();
-}
-
-// ===== CLICK =====
-document.getElementById("orb").addEventListener("click", function(e){
-    let gain = clickPower * prestige;
-    energy += gain;
-    totalEnergy += gain;
-
-    floatText("+"+gain, e.clientX, e.clientY);
-    playSound("https://www.myinstants.com/media/sounds/mouse-click.mp3");
-
-    update();
-});
-
-// ===== FLOAT =====
-function floatText(text,x,y){
-    let el=document.createElement("div");
-    el.className="float";
-    el.innerText=text;
-    el.style.left=x+"px";
-    el.style.top=y+"px";
-    document.body.appendChild(el);
-    setTimeout(()=>el.remove(),1000);
-}
-
-// ===== UPGRADES =====
-function buyGen(){
-    if(energy>=genCost){
-        energy-=genCost;
-        generators++;
-        genCost*=1.5;
-        playSound("https://www.myinstants.com/media/sounds/cash-register.mp3");
-        update();
-    }
-}
-
-function buyFactory(){
-    if(energy>=facCost){
-        energy-=facCost;
-        factories++;
-        facCost*=1.7;
-        playSound("https://www.myinstants.com/media/sounds/cash-register.mp3");
-        update();
-    }
-}
-
-function buyClick(){
-    if(energy>=clickCost){
-        energy-=clickCost;
-        clickPower++;
-        clickCost*=1.4;
-        playSound("https://www.myinstants.com/media/sounds/cash-register.mp3");
-        update();
-    }
-}
-
-// ===== PASSIVE =====
-setInterval(()=>{
-    let gain=getEPS();
-    energy+=gain;
-    totalEnergy+=gain;
-    update();
-},1000);
-
-// ===== GOLDEN =====
-setInterval(()=>{
-    if(Math.random()<0.3){
-        let g=document.getElementById("golden");
-        g.style.display="block";
-        g.style.left=Math.random()*window.innerWidth+"px";
-        g.style.top=Math.random()*window.innerHeight+"px";
-        setTimeout(()=>g.style.display="none",5000);
-    }
-},10000);
-
-document.getElementById("golden").onclick=function(){
-    let bonus=Math.floor(energy*0.25+50);
-    energy+=bonus;
-    alert("🌟 BONUS +"+bonus);
-    this.style.display="none";
-};
-
-// ===== ACHIEVEMENTS =====
-function checkAchievements(){
-    let list="";
-    function unlock(name,cond){
-        if(cond && !achieved.includes(name)) achieved.push(name);
-    }
-
-    unlock("100 Energy", totalEnergy>=100);
-    unlock("1k Energy", totalEnergy>=1000);
-    unlock("First Factory", factories>=1);
-
-    achieved.forEach(a=>list+="🏆 "+a+"<br>");
-    document.getElementById("achievements").innerHTML=list;
-}
-
-// ===== PRESTIGE =====
-function prestigeReset(){
-    if(totalEnergy>=10000){
-        prestige++;
-        energy=0;
-        generators=0;
-        factories=0;
-        clickPower=1;
-        genCost=50;
-        facCost=250;
-        clickCost=25;
-        alert("🌌 Ascended!");
-        update();
-    }
-}
-
-// ===== SAVE =====
-function save(){
-    localStorage.setItem("chaosSave", JSON.stringify({
-        energy,totalEnergy,clickPower,generators,factories,prestige,
-        genCost,facCost,clickCost,achieved
-    }));
-}
-
-function load(){
-    let data = JSON.parse(localStorage.getItem("chaosSave"));
-    if(data){
-        energy = data.energy || 0;
-        totalEnergy = data.totalEnergy || 0;
-        clickPower = data.clickPower || 1;
-        generators = data.generators || 0;
-        factories = data.factories || 0;
-        prestige = data.prestige || 1;
-        genCost = data.genCost || 50;
-        facCost = data.facCost || 250;
-        clickCost = data.clickCost || 25;
-        achieved = data.achieved || [];
-    }
-}
-
-setInterval(save,3000);
-load();
-
-// ===== RESET =====
-function resetGame(){
-    localStorage.clear();
-    location.reload();
-}
-
-// ===== TABS =====
-function openTab(name){
-    document.querySelectorAll(".shopTab").forEach(t=>t.style.display="none");
-    document.getElementById(name).style.display="block";
-}
-
-// init
-openTab('buildings');
-update();
-</script>
-
-</body>
-</html>
+pygame.quit()
+sys.exit()
