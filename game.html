@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ULTRA GOOSE CLICKER: MEGA EDITION</title>
+    <title>GOOSE CLICKER: OMEGA EDITION</title>
     <style>
         :root {
             --primary: #ff4757;
@@ -16,7 +16,7 @@
         body {
             background-color: var(--bg);
             color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
             display: flex;
             height: 100vh;
@@ -24,129 +24,102 @@
             user-select: none;
         }
 
-        /* Left Side: The Main Stage */
+        /* News Ticker */
+        #news-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: calc(100% - 400px);
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            color: var(--accent);
+            font-style: italic;
+            border-top: 2px solid var(--primary);
+        }
+
+        /* Left Side: Interaction */
         #click-zone {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            position: relative;
-            background: radial-gradient(circle, #2f3542 0%, #121417 100%);
+            background: radial-gradient(circle, #2f3542 0%, #000 100%);
         }
 
         #goose {
             font-size: 180px;
             cursor: pointer;
             transition: transform 0.05s;
-            z-index: 10;
+            filter: drop-shadow(0 0 30px rgba(255,165,2,0.3));
         }
 
-        #goose:active { transform: scale(0.85) rotate(5deg); }
+        #goose:active { transform: scale(0.8) rotate(-10deg); }
 
-        /* Right Side: The Massive Shop */
+        /* Right Side: Massive Shop */
         #shop {
-            width: 450px;
+            width: 400px;
             background: #16191c;
-            border-left: 2px solid #333;
             display: flex;
             flex-direction: column;
+            border-left: 3px solid var(--primary);
         }
 
         #shop-header {
             padding: 20px;
             background: var(--primary);
-            text-align: center;
-            font-weight: bold;
             font-size: 1.5rem;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
         #upgrade-list {
             flex: 1;
-            overflow-y: scroll; /* Force the scrollbar */
+            overflow-y: scroll;
             padding: 15px;
         }
 
-        /* Custom Scrollbar Styling */
-        #upgrade-list::-webkit-scrollbar { width: 10px; }
-        #upgrade-list::-webkit-scrollbar-track { background: #16191c; }
-        #upgrade-list::-webkit-scrollbar-thumb { 
-            background: var(--primary); 
-            border-radius: 5px;
-        }
+        /* Custom Scrollbar */
+        #upgrade-list::-webkit-scrollbar { width: 8px; }
+        #upgrade-list::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
 
         .upgrade-card {
             background: var(--card);
-            padding: 15px;
-            margin-bottom: 12px;
-            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: 0.2s;
             border: 2px solid transparent;
+            transition: 0.2s;
         }
 
         .upgrade-card:hover:not(.disabled) {
-            transform: scale(1.02);
-            background: #3e4451;
             border-color: var(--secondary);
+            transform: scale(1.03);
             cursor: pointer;
         }
 
         .upgrade-card.disabled {
-            opacity: 0.4;
+            opacity: 0.3;
             filter: grayscale(1);
             cursor: not-allowed;
         }
 
         .info { flex: 1; }
-        .name { font-weight: bold; color: var(--secondary); font-size: 1.1rem; }
-        .cost { color: var(--accent); font-weight: bold; }
-        .count { font-size: 1.5rem; margin-left: 15px; opacity: 0.5; }
+        .name { font-weight: bold; color: var(--secondary); }
+        .cost { color: var(--accent); font-weight: bold; font-size: 0.9rem; }
+        .owned { font-size: 1.5rem; font-weight: bold; opacity: 0.4; margin-left: 10px; }
 
-        /* HUD */
-        #stats {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 20;
-        }
-        .score { font-size: 3rem; color: var(--secondary); text-shadow: 3px 3px 0px #000; }
+        /* Stats */
+        #stats { position: absolute; top: 20px; left: 20px; }
+        .score { font-size: 3.5rem; color: var(--secondary); text-shadow: 3px 3px 0 #000; }
 
-        /* Effects */
         .particle {
             position: absolute;
             pointer-events: none;
-            animation: explode 0.7s forwards;
+            animation: fly 0.6s ease-out forwards;
         }
-        @keyframes explode {
-            to { transform: translate(var(--x), var(--y)) rotate(360deg); opacity: 0; }
-        }
-    </style>
-</head>
-<body>
-
-    <div id="stats">
-        <div class="score">🪿 <span id="count">0</span></div>
-        <div style="color: #ccc;">Honks Per Second: <span id="hps">0</span></div>
-        <div style="color: #ccc;">Honks Per Click: <span id="hpc">1</span></div>
-    </div>
-
-    <div id="click-zone">
-        <div id="goose">🪿</div>
-    </div>
-
-    <div id="shop">
-        <div id="shop-header">GOOSE EMPORIUM</div>
-        <div id="upgrade-list"></div>
-    </div>
-
-    <script>
-        let honks = 0;
-        let hps = 0;
-        let hpc = 1;
-
-        const upgradeData = [
-            { name: "Extra Finger
+        @keyframes fly { to { transform: translate(var(--x), var(--y)); opacity: 0; } }
