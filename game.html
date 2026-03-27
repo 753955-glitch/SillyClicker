@@ -1,122 +1,144 @@
-import pygame
-import sys
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2D Parkour Game</title>
+<style>
+  body {
+    margin: 0;
+    background: #fff;
+  }
+  canvas {
+    display: block;
+    margin: 0 auto;
+    background: #eee;
+    border: 2px solid #000;
+  }
+</style>
+</head>
+<body>
 
-# Initialize Pygame
-pygame.init()
+<canvas id="gameCanvas" width="800" height="600"></canvas>
 
-# Screen settings
-WIDTH, HEIGHT = 800, 600
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("2D Parkour Game")
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-# Clock for FPS
-clock = pygame.time.Clock()
-FPS = 60
+const WIDTH = canvas.width;
+const HEIGHT = canvas.height;
 
-# Colors
-WHITE = (255, 255, 255)
-BLUE = (0, 102, 255)
-GREEN = (0, 200, 0)
-RED = (255, 0, 0)
-BLACK = (0, 0, 0)
+// Player
+const player = {
+    x: 50,
+    y: HEIGHT - 100,
+    width: 50,
+    height: 50,
+    dx: 0,
+    dy: 0,
+    speed: 5,
+    jumpPower: 12,
+    onGround: false
+};
 
-# Player settings
-player_width, player_height = 50, 50
-player_x, player_y = 100, HEIGHT - player_height - 50
-player_vel_x = 5
-player_vel_y = 0
-jump_power = 12
-gravity = 0.6
-on_ground = False
+// Gravity
+const gravity = 0.6;
 
-# Level structure: list of platforms (x, y, width, height)
-levels = [
-    # Level 1
-    [(0, HEIGHT-50, WIDTH, 50), (300, HEIGHT-150, 100, 20)],
-    # Level 2
-    [(0, HEIGHT-50, WIDTH, 50), (200, HEIGHT-120, 100, 20), (400, HEIGHT-200, 150, 20)],
-    # Level 3
-    [(0, HEIGHT-50, WIDTH, 50), (150, HEIGHT-100, 50, 20), (300, HEIGHT-150, 100, 20), (500, HEIGHT-200, 150, 20)],
-    # Level 4-15 just progressively add more platforms and height
-]
+// Levels: list of platforms (x, y, width, height)
+let levels = [
+    [[0, HEIGHT-50, WIDTH, 50], [300, HEIGHT-150, 100, 20]],
+    [[0, HEIGHT-50, WIDTH, 50], [200, HEIGHT-120, 100, 20], [400, HEIGHT-200, 150, 20]],
+    [[0, HEIGHT-50, WIDTH, 50], [150, HEIGHT-100, 50, 20], [300, HEIGHT-150, 100, 20], [500, HEIGHT-200, 150, 20]]
+];
 
-# Generate levels 4-15 programmatically
-for i in range(4, 16):
-    platforms = [(0, HEIGHT-50, WIDTH, 50)]
-    for j in range(1, i + 3):
-        platforms.append((j*100 % 700, HEIGHT-50-j*30, 80, 20))
-    levels.append(platforms)
+// Generate levels 4-15
+for(let i=4; i<=15; i++){
+    let plats = [[0, HEIGHT-50, WIDTH, 50]];
+    for(let j=1; j<=i+2; j++){
+        plats.push([j*100 % 700, HEIGHT-50-j*30, 80, 20]);
+    }
+    levels.push(plats);
+}
 
-current_level = 0
-platforms = levels[current_level]
+let currentLevel = 0;
+let platforms = levels[currentLevel];
 
-# Game loop
-running = True
-while running:
-    clock.tick(FPS)
-    screen.fill(WHITE)
+// Keys
+let keys = {};
 
-    # Event handling
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+document.addEventListener("keydown", (e)=>{
+    keys[e.code] = true;
+});
+document.addEventListener("keyup", (e)=>{
+    keys[e.code] = false;
+});
 
-    # Key presses
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT]:
-        player_x -= player_vel_x
-    if keys[pygame.K_RIGHT]:
-        player_x += player_vel_x
-    if keys[pygame.K_SPACE] and on_ground:
-        player_vel_y = -jump_power
-        on_ground = False
+// Game loop
+function gameLoop(){
+    ctx.clearRect(0,0,WIDTH,HEIGHT);
 
-    # Apply gravity
-    player_vel_y += gravity
-    player_y += player_vel_y
+    // Movement
+    if(keys["ArrowLeft"]) player.x -= player.speed;
+    if(keys["ArrowRight"]) player.x += player.speed;
+    if(keys["Space"] && player.onGround){
+        player.dy = -player.jumpPower;
+        player.onGround = false;
+    }
 
-    # Platform collision
-    on_ground = False
-    player_rect = pygame.Rect(player_x, player_y, player_width, player_height)
-    for plat in platforms:
-        plat_rect = pygame.Rect(*plat)
-        if player_rect.colliderect(plat_rect) and player_vel_y >= 0:
-            player_y = plat[1] - player_height
-            player_vel_y = 0
-            on_ground = True
+    // Apply gravity
+    player.dy += gravity;
+    player.y += player.dy;
 
-    # Draw platforms
-    for plat in platforms:
-        pygame.draw.rect(screen, GREEN, plat)
+    // Collision detection
+    player.onGround = false;
+    for(let plat of platforms){
+        if(player.x + player.width > plat[0] && player.x < plat[0]+plat[2] &&
+           player.y + player.height > plat[1] && player.y + player.height < plat[1]+plat[3]+player.dy){
+            player.y = plat[1] - player.height;
+            player.dy = 0;
+            player.onGround = true;
+        }
+    }
 
-    # Draw player
-    pygame.draw.rect(screen, BLUE, (player_x, player_y, player_width, player_height))
+    // Draw platforms
+    ctx.fillStyle = "green";
+    for(let plat of platforms){
+        ctx.fillRect(plat[0], plat[1], plat[2], plat[3]);
+    }
 
-    # Check if player reached end of level
-    if player_x > WIDTH:
-        current_level += 1
-        if current_level >= len(levels):
-            font = pygame.font.SysFont(None, 60)
-            text = font.render("You Win!", True, RED)
-            screen.blit(text, (WIDTH//2-100, HEIGHT//2))
-            pygame.display.update()
-            pygame.time.delay(3000)
-            running = False
-        else:
-            platforms = levels[current_level]
-            player_x = 50
-            player_y = HEIGHT - player_height - 50
-            player_vel_y = 0
+    // Draw player
+    ctx.fillStyle = "blue";
+    ctx.fillRect(player.x, player.y, player.width, player.height);
 
-    # Keep player in screen bounds
-    if player_x < 0:
-        player_x = 0
-    if player_y > HEIGHT:
-        player_y = HEIGHT - player_height
-        player_vel_y = 0
-        on_ground = True
+    // Level progression
+    if(player.x > WIDTH){
+        currentLevel++;
+        if(currentLevel >= levels.length){
+            ctx.fillStyle = "red";
+            ctx.font = "60px Arial";
+            ctx.fillText("You Win!", WIDTH/2 - 120, HEIGHT/2);
+            return; // stop game
+        }
+        platforms = levels[currentLevel];
+        player.x = 50;
+        player.y = HEIGHT - player.height - 50;
+        player.dy = 0;
+    }
 
-    pygame.display.update()
+    // Keep player in screen
+    if(player.x < 0) player.x = 0;
+    if(player.y > HEIGHT - player.height){
+        player.y = HEIGHT - player.height;
+        player.dy = 0;
+        player.onGround = true;
+    }
 
-pygame.quit()
-sys.exit()
+    requestAnimationFrame(gameLoop);
+}
+
+// Start game
+gameLoop();
+</script>
+
+</body>
+</html>
