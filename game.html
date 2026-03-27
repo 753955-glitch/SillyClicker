@@ -1,35 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Silly Clicker</title>
-    <style>
-        /* No boxes, just a clean background */
-        body {
-            font-family: 'Comic Sans MS', cursive;
-            background-color: #fff4e6;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            user-select: none;
-        }
+<meta charset="UTF-8">
+<title>Silly Clicker</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background: #f0f8ff;
+    }
 
-        h1 { color: #ff6600; font-size: 3rem; margin: 0; }
+    h1 {
+        margin-top: 20px;
+    }
 
-        /* The Smiley: No background, no border, just the emoji */
-        #smiley {
-            font-size: 150px;
-            cursor: pointer;
-            background: none;
-            border: none;
-            padding: 20px;
-            transition: transform 0.05s;
-            outline: none;
-        }
+    #smiley {
+        font-size: 100px;
+        cursor: pointer;
+        transition: transform 0.1s;
+    }
 
-        #smiley:active { transform: scale(0.8); }
+    #smiley:active {
+        transform: scale(0.9);
+    }
 
-        .stats { font-size: 2.5rem; font-weight:
+    #score {
+        font-size: 30px;
+        margin: 20px;
+    }
+
+    .upgrade {
+        margin: 10px;
+        padding: 10px;
+        background: #fff;
+        border: 2px solid #ccc;
+        cursor: pointer;
+        display: inline-block;
+    }
+
+    .upgrade:hover {
+        background: #e0f7ff;
+    }
+</style>
+</head>
+<body>
+
+<h1>Silly Clicker 😀</h1>
+
+<div id="score">Clicks: 0</div>
+
+<div id="smiley">😀</div>
+
+<h2>Upgrades</h2>
+
+<div class="upgrade" onclick="buyMultiplier()">
+    Multiplier (x2) - Cost: <span id="multCost">50</span>
+</div>
+
+<div class="upgrade" onclick="buyAutoClicker()">
+    Auto Clicker (+1/sec) - Cost: <span id="autoCost">100</span>
+</div>
+
+<script>
+let clicks = 0;
+let multiplier = 1;
+let autoClickers = 0;
+
+let multCost = 50;
+let autoCost = 100;
+
+// Update display
+function updateDisplay() {
+    document.getElementById("score").innerText = "Clicks: " + clicks;
+    document.getElementById("multCost").innerText = multCost;
+    document.getElementById("autoCost").innerText = autoCost;
+}
+
+// Clicking the smiley
+document.getElementById("smiley").addEventListener("click", () => {
+    clicks += multiplier;
+    updateDisplay();
+});
+
+// Buy multiplier
+function buyMultiplier() {
+    if (clicks >= multCost) {
+        clicks -= multCost;
+        multiplier *= 2;
+        multCost = Math.floor(multCost * 1.8);
+        updateDisplay();
+    }
+}
+
+// Buy auto clicker
+function buyAutoClicker() {
+    if (clicks >= autoCost) {
+        clicks -= autoCost;
+        autoClickers += 1;
+        autoCost = Math.floor(autoCost * 1.7);
+        updateDisplay();
+    }
+}
+
+// Auto clicking loop
+setInterval(() => {
+    clicks += autoClickers;
+    updateDisplay();
+}, 1000);
+
+// Initial display
+updateDisplay();
+</script>
+
+</body>
+</html>
