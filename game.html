@@ -3,127 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOOSE CLICKER: INFINITY</title>
+    <title>GOOSE CLICKER DELUXE</title>
     <style>
-        :root {
-            --gold: #ffcc00;
-            --bg: #0f172a;
-            --card: #1e293b;
-            --text: #f8fafc;
-        }
-
         body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: #1a1a2e;
+            color: white;
+            font-family: sans-serif;
             margin: 0;
             display: flex;
             height: 100vh;
-            overflow: hidden;
         }
 
-        /* LEFT PANEL: CLICKING */
-        #game {
+        /* Left Side */
+        #game-area {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            position: relative;
+            background: radial-gradient(circle, #16213e, #1a1a2e);
         }
 
         #goose {
-            font-size: 200px;
+            font-size: 150px;
             cursor: pointer;
-            transition: 0.05s;
             user-select: none;
+            transition: transform 0.1s;
         }
 
-        #goose:active { transform: scale(0.8); }
+        #goose:active { transform: scale(0.9); }
 
-        /* RIGHT PANEL: MASSIVE SHOP */
+        /* Right Side Shop */
         #shop {
-            width: 450px;
-            background: #020617;
-            border-left: 4px solid var(--gold);
+            width: 350px;
+            background-color: #0f3460;
+            border-left: 4px solid #e94560;
             display: flex;
             flex-direction: column;
         }
 
         #shop-header {
+            background-color: #e94560;
             padding: 20px;
-            background: var(--gold);
-            color: black;
-            font-weight: 900;
+            font-size: 24px;
+            font-weight: bold;
             text-align: center;
-            font-size: 1.5rem;
         }
 
         #upgrade-list {
             flex: 1;
-            overflow-y: scroll; /* THE SCROLL BAR */
-            padding: 15px;
+            overflow-y: auto; /* Enables scrolling */
+            padding: 10px;
         }
 
-        /* Custom Scrollbar */
-        #upgrade-list::-webkit-scrollbar { width: 12px; }
-        #upgrade-list::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 6px; }
-
-        .upgrade {
-            background: var(--card);
+        .upgrade-button {
+            background-color: #16213e;
+            border: 2px solid #e94560;
+            color: white;
+            padding: 15px;
             margin-bottom: 10px;
-            padding: 15px;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            border-radius: 8px;
             cursor: pointer;
-            border: 2px solid transparent;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        .upgrade:hover:not(.disabled) { border-color: var(--gold); background: #334155; }
-        .upgrade.disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
+        .upgrade-button:hover:not(:disabled) { background-color: #0f3460; }
+        .upgrade-button:disabled { opacity: 0.4; cursor: not-allowed; border-color: #555; }
 
-        .u-info .name { font-weight: bold; color: var(--gold); font-size: 1.1rem; }
-        .u-info .cost { color: #4ade80; font-weight: bold; }
-        .u-count { font-size: 2rem; font-weight: 900; opacity: 0.2; }
+        .upg-name { font-weight: bold; font-size: 16px; color: #f9d342; }
+        .upg-cost { font-size: 14px; color: #4ade80; }
 
-        /* HUD */
         #stats { position: absolute; top: 20px; left: 20px; }
-        .total-honks { font-size: 4rem; color: var(--gold); font-weight: 900; line-height: 1; }
-        
-        .particle {
-            position: absolute;
-            pointer-events: none;
-            animation: float 0.7s forwards;
-            font-weight: bold;
-        }
-        @keyframes float { to { transform: translateY(-100px); opacity: 0; } }
+        .big-honks { font-size: 48px; font-weight: bold; color: #f9d342; }
     </style>
 </head>
 <body>
 
-    <div id="game">
+    <div id="game-area">
         <div id="stats">
-            <div class="total-honks" id="display-count">0</div>
-            <div id="display-hps">HPS: 0</div>
-            <button onclick="saveGame()" style="margin-top:10px; cursor:pointer;">💾 Save Progress</button>
-            <button onclick="resetGame()" style="cursor:pointer;">🗑️ Reset</button>
+            <div class="big-honks" id="honk-count">0</div>
+            <div id="hps-text">Honks Per Second: 0</div>
+            <div id="hpc-text">Per Click: 1</div>
         </div>
         <div id="goose">🪿</div>
     </div>
 
     <div id="shop">
-        <div id="shop-header">THE HONK BAZAAR</div>
-        <div id="upgrade-list"></div>
-    </div>
-
-    <script>
-        let honks = 0;
-        let hps = 0;
-        let hpc = 1;
-
-        // 25+ UPGRADES
-        const baseUpgrades = [
-            { n: "Clicker Training", c: 15, hpc: 1, hps: 0 },
-            { n: "Baby Gosling", c: 100, hpc: 0,
+        <div id="shop-header">UPGRADES</div>
+        <div id
