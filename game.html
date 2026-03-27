@@ -4,209 +4,252 @@
 <meta charset="UTF-8">
 <title>Chaos Clicker ⚡</title>
 <style>
-    body {
-        font-family: Arial;
-        text-align: center;
-        background: linear-gradient(to right, #1e1e2f, #2c2c54);
-        color: white;
-        overflow: hidden;
-        user-select: none; /* ✅ FIX highlight issue */
-    }
+body {
+    font-family: Arial;
+    text-align: center;
+    background: linear-gradient(to right, #1e1e2f, #2c2c54);
+    color: white;
+    user-select: none;
+}
 
-    #orb {
-        font-size: 100px;
-        cursor: pointer;
-        user-select: none;
-    }
+#orb {
+    font-size: 100px;
+    cursor: pointer;
+    margin: 20px;
+}
 
-    #score, #eps {
-        font-size: 24px;
-        margin: 10px;
-    }
+#score, #eps, #prestige {
+    font-size: 20px;
+    margin: 5px;
+}
 
-    .upgrade {
-        background: #444;
-        padding: 10px;
-        margin: 10px;
-        display: inline-block;
-        cursor: pointer;
-        border-radius: 8px;
-    }
+.upgrade {
+    background: #444;
+    padding: 10px;
+    margin: 8px;
+    display: inline-block;
+    cursor: pointer;
+    border-radius: 8px;
+}
 
-    .upgrade:hover {
-        background: #666;
-    }
+.upgrade:hover { background: #666; }
 
-    .spark {
-        position: absolute;
-        color: yellow;
-        font-size: 20px;
-        pointer-events: none;
-        animation: floatUp 0.6s ease-out forwards;
-    }
+.float {
+    position: absolute;
+    color: yellow;
+    font-size: 18px;
+    pointer-events: none;
+    animation: floatUp 1s forwards;
+}
 
-    @keyframes floatUp {
-        0% { opacity: 1; transform: translateY(0) scale(1); }
-        100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
-    }
+@keyframes floatUp {
+    to { transform: translateY(-60px); opacity: 0; }
+}
+
+#golden {
+    position: absolute;
+    font-size: 60px;
+    display: none;
+    cursor: pointer;
+}
 </style>
 </head>
 <body>
 
 <h1>Chaos Clicker ⚡</h1>
 
-<div id="score">Chaos Energy: 0</div>
-<div id="eps">Energy/sec: 0</div>
+<div id="score">Energy: 0</div>
+<div id="eps">EPS: 0</div>
+<div id="prestige">Prestige Multiplier: x1</div>
 
 <div id="orb">⚡</div>
+<div id="golden">🌟</div>
 
 <h2>Upgrades</h2>
 
-<div class="upgrade" onclick="buyClickPower()">
-    Stronger Click (+1) - Cost: <span id="clickCost">25</span>
-</div>
+<div class="upgrade" onclick="buyGen()">Generator - <span id="genCost">50</span></div>
+<div class="upgrade" onclick="buyFactory()">Factory - <span id="facCost">250</span></div>
+<div class="upgrade" onclick="buyClick()">Click Power - <span id="clickCost">25</span></div>
 
-<div class="upgrade" onclick="buyGenerator()">
-    Generator (+1/sec) - Cost: <span id="genCost">50</span>
-</div>
+<h2>Other</h2>
+<div class="upgrade" onclick="prestigeReset()">🌌 Prestige Reset</div>
+<div class="upgrade" onclick="resetGame()">⚠️ Hard Reset</div>
 
-<div class="upgrade" onclick="buyFactory()">
-    Factory (+5/sec) - Cost: <span id="factoryCost">250</span>
-</div>
-
-<div class="upgrade" onclick="buyMegaClick()">
-    Mega Click (+10 click) - Cost: <span id="megaCost">500</span>
-</div>
-
-<div class="upgrade" onclick="buyAutoBoost()">
-    Auto Booster (x2 generators) - Cost: <span id="boostCost">800</span>
-</div>
-
-<div class="upgrade" onclick="activateStorm()">
-    Storm Mode (x3 ALL for 10s) - Cost: <span id="stormCost">1000</span>
-</div>
+<h2>Achievements</h2>
+<div id="achievements"></div>
 
 <script>
 let energy = 0;
+let totalEnergy = 0;
 
-// stats
 let clickPower = 1;
 let generators = 0;
 let factories = 0;
-let generatorBoost = 1;
+
+let prestige = 1;
 
 // costs
-let clickCost = 25;
 let genCost = 50;
-let factoryCost = 250;
-let megaCost = 500;
-let boostCost = 800;
-let stormCost = 1000;
+let facCost = 250;
+let clickCost = 25;
 
-let stormActive = false;
+// achievements
+let achieved = [];
 
+// ===== CORE =====
 function getEPS() {
-    let base = (generators * 1 + factories * 5) * generatorBoost;
-    return stormActive ? base * 3 : base;
+    return (generators + factories * 5) * prestige;
 }
 
 function update() {
-    document.getElementById("score").innerText = "Chaos Energy: " + Math.floor(energy);
-    document.getElementById("eps").innerText = "Energy/sec: " + getEPS();
+    document.getElementById("score").innerText = "Energy: " + Math.floor(energy);
+    document.getElementById("eps").innerText = "EPS: " + getEPS();
+    document.getElementById("prestige").innerText = "Prestige Multiplier: x" + prestige;
 
-    document.getElementById("clickCost").innerText = clickCost;
     document.getElementById("genCost").innerText = genCost;
-    document.getElementById("factoryCost").innerText = factoryCost;
-    document.getElementById("megaCost").innerText = megaCost;
-    document.getElementById("boostCost").innerText = boostCost;
-    document.getElementById("stormCost").innerText = stormCost;
+    document.getElementById("facCost").innerText = facCost;
+    document.getElementById("clickCost").innerText = clickCost;
+
+    checkAchievements();
 }
 
-// spark
-function createSpark(x, y) {
-    let spark = document.createElement("div");
-    spark.className = "spark";
-    spark.innerText = "⚡";
-
-    spark.style.left = x + "px";
-    spark.style.top = y + "px";
-
-    document.body.appendChild(spark);
-    setTimeout(() => spark.remove(), 600);
-}
-
-// click
+// ===== CLICK =====
 document.getElementById("orb").onclick = (e) => {
-    let power = stormActive ? clickPower * 3 : clickPower;
-    energy += power;
+    let gain = clickPower * prestige;
+    energy += gain;
+    totalEnergy += gain;
+    floatText("+" + gain, e.clientX, e.clientY);
     update();
-    createSpark(e.clientX, e.clientY);
 };
 
-// upgrades
-function buyClickPower() {
-    if (energy >= clickCost) {
-        energy -= clickCost;
-        clickPower++;
-        clickCost = Math.floor(clickCost * 1.5);
-        update();
-    }
+// floating text
+function floatText(text, x, y) {
+    let el = document.createElement("div");
+    el.className = "float";
+    el.innerText = text;
+    el.style.left = x + "px";
+    el.style.top = y + "px";
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
 }
 
-function buyGenerator() {
+// ===== UPGRADES =====
+function buyGen() {
     if (energy >= genCost) {
         energy -= genCost;
         generators++;
-        genCost = Math.floor(genCost * 1.6);
+        genCost *= 1.5;
         update();
     }
 }
 
 function buyFactory() {
-    if (energy >= factoryCost) {
-        energy -= factoryCost;
+    if (energy >= facCost) {
+        energy -= facCost;
         factories++;
-        factoryCost = Math.floor(factoryCost * 1.7);
+        facCost *= 1.7;
         update();
     }
 }
 
-function buyMegaClick() {
-    if (energy >= megaCost) {
-        energy -= megaCost;
-        clickPower += 10;
-        megaCost = Math.floor(megaCost * 2);
+function buyClick() {
+    if (energy >= clickCost) {
+        energy -= clickCost;
+        clickPower++;
+        clickCost *= 1.4;
         update();
     }
 }
 
-function buyAutoBoost() {
-    if (energy >= boostCost) {
-        energy -= boostCost;
-        generatorBoost *= 2;
-        boostCost = Math.floor(boostCost * 2.2);
-        update();
-    }
-}
-
-function activateStorm() {
-    if (energy >= stormCost && !stormActive) {
-        energy -= stormCost;
-        stormActive = true;
-        update();
-
-        setTimeout(() => {
-            stormActive = false;
-            update();
-        }, 10000);
-    }
-}
-
-// passive
+// ===== PASSIVE =====
 setInterval(() => {
-    energy += getEPS();
+    let gain = getEPS();
+    energy += gain;
+    totalEnergy += gain;
     update();
 }, 1000);
+
+// ===== GOLDEN ORB =====
+let golden = document.getElementById("golden");
+
+setInterval(() => {
+    if (Math.random() < 0.3) {
+        golden.style.display = "block";
+        golden.style.left = Math.random() * window.innerWidth + "px";
+        golden.style.top = Math.random() * window.innerHeight + "px";
+
+        setTimeout(() => golden.style.display = "none", 5000);
+    }
+}, 10000);
+
+golden.onclick = () => {
+    let bonus = Math.floor(energy * 0.25 + 50);
+    energy += bonus;
+    golden.style.display = "none";
+    alert("🌟 CHAOS BONUS! +" + bonus);
+};
+
+// ===== ACHIEVEMENTS =====
+function checkAchievements() {
+    let list = "";
+
+    function unlock(name, condition) {
+        if (condition && !achieved.includes(name)) {
+            achieved.push(name);
+        }
+    }
+
+    unlock("100 Energy", totalEnergy >= 100);
+    unlock("1k Energy", totalEnergy >= 1000);
+    unlock("10 Generators", generators >= 10);
+
+    achieved.forEach(a => list += "🏆 " + a + "<br>");
+    document.getElementById("achievements").innerHTML = list;
+}
+
+// ===== PRESTIGE =====
+function prestigeReset() {
+    if (totalEnergy >= 10000) {
+        prestige += 1;
+
+        energy = 0;
+        generators = 0;
+        factories = 0;
+        clickPower = 1;
+
+        genCost = 50;
+        facCost = 250;
+        clickCost = 25;
+
+        alert("🌌 You ascended! Permanent boost gained.");
+        update();
+    }
+}
+
+// ===== SAVE =====
+function save() {
+    localStorage.setItem("chaosSave", JSON.stringify({
+        energy, totalEnergy, clickPower,
+        generators, factories, prestige,
+        genCost, facCost, clickCost, achieved
+    }));
+}
+
+function load() {
+    let data = JSON.parse(localStorage.getItem("chaosSave"));
+    if (data) {
+        Object.assign(window, data);
+    }
+}
+
+setInterval(save, 3000);
+load();
+
+// ===== RESET =====
+function resetGame() {
+    localStorage.clear();
+    location.reload();
+}
 
 // init
 update();
