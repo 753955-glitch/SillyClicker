@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ULTRA GOOSE CLICKER 3000</title>
+    <title>ULTRA GOOSE CLICKER: MEGA EDITION</title>
     <style>
         :root {
             --primary: #ff4757;
             --secondary: #ffa502;
             --accent: #2ed573;
-            --bg: #2f3542;
+            --bg: #1e2124;
+            --card: #2f3542;
         }
 
         body {
             background-color: var(--bg);
             color: white;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             display: flex;
             height: 100vh;
@@ -23,55 +24,129 @@
             user-select: none;
         }
 
-        /* Left Side: The Clicking Zone */
+        /* Left Side: The Main Stage */
         #click-zone {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-right: 4px solid var(--primary);
-            background: radial-gradient(circle, #3f4656 0%, #2f3542 100%);
+            position: relative;
+            background: radial-gradient(circle, #2f3542 0%, #121417 100%);
         }
 
         #goose {
-            font-size: 150px;
+            font-size: 180px;
             cursor: pointer;
-            transition: transform 0.05s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            filter: drop-shadow(0 0 20px rgba(255,255,255,0.2));
+            transition: transform 0.05s;
+            z-index: 10;
         }
 
-        #goose:hover { transform: scale(1.1); }
-        #goose:active { transform: scale(0.9) rotate(-5deg); }
+        #goose:active { transform: scale(0.85) rotate(5deg); }
 
-        /* Right Side: The Shop */
+        /* Right Side: The Massive Shop */
         #shop {
-            width: 400px;
+            width: 450px;
+            background: #16191c;
+            border-left: 2px solid #333;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #shop-header {
             padding: 20px;
-            overflow-y: auto;
-            background: #1e2124;
+            background: var(--primary);
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        #upgrade-list {
+            flex: 1;
+            overflow-y: scroll; /* Force the scrollbar */
+            padding: 15px;
+        }
+
+        /* Custom Scrollbar Styling */
+        #upgrade-list::-webkit-scrollbar { width: 10px; }
+        #upgrade-list::-webkit-scrollbar-track { background: #16191c; }
+        #upgrade-list::-webkit-scrollbar-thumb { 
+            background: var(--primary); 
+            border-radius: 5px;
         }
 
         .upgrade-card {
-            background: #2f3542;
+            background: var(--card);
             padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 10px;
-            border-left: 5px solid var(--secondary);
-            cursor: pointer;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             transition: 0.2s;
+            border: 2px solid transparent;
         }
 
         .upgrade-card:hover:not(.disabled) {
-            background: #57606f;
-            transform: translateX(5px);
+            transform: scale(1.02);
+            background: #3e4451;
+            border-color: var(--secondary);
+            cursor: pointer;
         }
 
         .upgrade-card.disabled {
-            opacity: 0.5;
+            opacity: 0.4;
+            filter: grayscale(1);
             cursor: not-allowed;
-            border-left-color: #747d8c;
         }
 
-        .upgrade-name { font-weight: bold; font-size: 1.1em; color: var(--secondary); }
-        .upgrade-cost { font-size: 0.9em
+        .info { flex: 1; }
+        .name { font-weight: bold; color: var(--secondary); font-size: 1.1rem; }
+        .cost { color: var(--accent); font-weight: bold; }
+        .count { font-size: 1.5rem; margin-left: 15px; opacity: 0.5; }
+
+        /* HUD */
+        #stats {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 20;
+        }
+        .score { font-size: 3rem; color: var(--secondary); text-shadow: 3px 3px 0px #000; }
+
+        /* Effects */
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            animation: explode 0.7s forwards;
+        }
+        @keyframes explode {
+            to { transform: translate(var(--x), var(--y)) rotate(360deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="stats">
+        <div class="score">🪿 <span id="count">0</span></div>
+        <div style="color: #ccc;">Honks Per Second: <span id="hps">0</span></div>
+        <div style="color: #ccc;">Honks Per Click: <span id="hpc">1</span></div>
+    </div>
+
+    <div id="click-zone">
+        <div id="goose">🪿</div>
+    </div>
+
+    <div id="shop">
+        <div id="shop-header">GOOSE EMPORIUM</div>
+        <div id="upgrade-list"></div>
+    </div>
+
+    <script>
+        let honks = 0;
+        let hps = 0;
+        let hpc = 1;
+
+        const upgradeData = [
+            { name: "Extra Finger
