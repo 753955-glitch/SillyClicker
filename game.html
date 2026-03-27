@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Chaos Clicker ⚡</title>
+
 <style>
 body {
     font-family: Arial;
@@ -12,32 +13,62 @@ body {
     user-select: none;
 }
 
+/* TOP UI */
+#score, #eps, #prestige {
+    margin: 5px;
+}
+
+/* ORB */
 #orb {
     font-size: 100px;
     cursor: pointer;
     margin: 20px;
+    transition: transform 0.1s;
+}
+#orb:active {
+    transform: scale(0.9);
 }
 
-#score, #eps, #prestige {
-    font-size: 20px;
-    margin: 5px;
+/* SHOP */
+#shop {
+    width: 320px;
+    height: 250px;
+    margin: 20px auto;
+    overflow-y: auto;
+    border: 2px solid #555;
+    border-radius: 10px;
+    background: #222;
+    padding: 10px;
 }
 
+/* UPGRADE */
 .upgrade {
     background: #444;
     padding: 10px;
     margin: 8px;
-    display: inline-block;
     cursor: pointer;
     border-radius: 8px;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-.upgrade:hover { background: #666; }
+.upgrade:hover {
+    background: #666;
+    transform: scale(1.03);
+}
 
+/* ICON */
+.icon {
+    font-size: 24px;
+    margin-right: 10px;
+}
+
+/* FLOAT TEXT */
 .float {
     position: absolute;
     color: yellow;
-    font-size: 18px;
     pointer-events: none;
     animation: floatUp 1s forwards;
 }
@@ -46,6 +77,16 @@ body {
     to { transform: translateY(-60px); opacity: 0; }
 }
 
+/* BUY FLASH */
+.buyFlash {
+    animation: flash 0.3s;
+}
+@keyframes flash {
+    0% { background: #0f0; }
+    100% { background: #444; }
+}
+
+/* GOLDEN */
 #golden {
     position: absolute;
     font-size: 60px;
@@ -54,75 +95,73 @@ body {
 }
 </style>
 </head>
+
 <body>
 
 <h1>Chaos Clicker ⚡</h1>
 
 <div id="score">Energy: 0</div>
 <div id="eps">EPS: 0</div>
-<div id="prestige">Prestige Multiplier: x1</div>
+<div id="prestige">Prestige x1</div>
 
 <div id="orb">⚡</div>
 <div id="golden">🌟</div>
 
-<h2>Upgrades</h2>
+<h2>Shop</h2>
 
-<div class="upgrade" onclick="buyGen()">Generator - <span id="genCost">50</span></div>
-<div class="upgrade" onclick="buyFactory()">Factory - <span id="facCost">250</span></div>
-<div class="upgrade" onclick="buyClick()">Click Power - <span id="clickCost">25</span></div>
+<div id="shop">
+
+<div class="upgrade" onclick="buyGen(this)">
+    <span><span class="icon">⚙️</span> Generator</span>
+    <span id="genCost">50</span>
+</div>
+
+<div class="upgrade" onclick="buyFactory(this)">
+    <span><span class="icon">🏭</span> Factory</span>
+    <span id="facCost">250</span>
+</div>
+
+<div class="upgrade" onclick="buyClick(this)">
+    <span><span class="icon">👆</span> Click Power</span>
+    <span id="clickCost">25</span>
+</div>
+
+</div>
 
 <h2>Other</h2>
-<div class="upgrade" onclick="prestigeReset()">🌌 Prestige Reset</div>
-<div class="upgrade" onclick="resetGame()">⚠️ Hard Reset</div>
+<div class="upgrade" onclick="prestigeReset()">🌌 Prestige</div>
+<div class="upgrade" onclick="resetGame()">⚠️ Reset</div>
 
-<h2>Achievements</h2>
+<h3>Achievements</h3>
 <div id="achievements"></div>
 
 <script>
-let energy = 0;
-let totalEnergy = 0;
-
-let clickPower = 1;
-let generators = 0;
-let factories = 0;
-
+let energy = 0, totalEnergy = 0;
+let clickPower = 1, generators = 0, factories = 0;
 let prestige = 1;
 
-// costs
-let genCost = 50;
-let facCost = 250;
-let clickCost = 25;
+let genCost = 50, facCost = 250, clickCost = 25;
 
-// achievements
 let achieved = [];
 
-// ===== CORE =====
+// ===== UPDATE =====
 function getEPS() {
     return (generators + factories * 5) * prestige;
 }
 
 function update() {
-    document.getElementById("score").innerText = "Energy: " + Math.floor(energy);
-    document.getElementById("eps").innerText = "EPS: " + getEPS();
-    document.getElementById("prestige").innerText = "Prestige Multiplier: x" + prestige;
+    score.innerText = "Energy: " + Math.floor(energy);
+    eps.innerText = "EPS: " + getEPS();
+    prestigeText.innerText = "Prestige x" + prestige;
 
-    document.getElementById("genCost").innerText = genCost;
-    document.getElementById("facCost").innerText = facCost;
-    document.getElementById("clickCost").innerText = clickCost;
+    genCostEl.innerText = Math.floor(genCost);
+    facCostEl.innerText = Math.floor(facCost);
+    clickCostEl.innerText = Math.floor(clickCost);
 
     checkAchievements();
 }
 
-// ===== CLICK =====
-document.getElementById("orb").onclick = (e) => {
-    let gain = clickPower * prestige;
-    energy += gain;
-    totalEnergy += gain;
-    floatText("+" + gain, e.clientX, e.clientY);
-    update();
-};
-
-// floating text
+// ===== FLOAT TEXT =====
 function floatText(text, x, y) {
     let el = document.createElement("div");
     el.className = "float";
@@ -133,30 +172,51 @@ function floatText(text, x, y) {
     setTimeout(() => el.remove(), 1000);
 }
 
+// ===== BUY EFFECT =====
+function buyEffect(el, text) {
+    el.classList.add("buyFlash");
+    setTimeout(() => el.classList.remove("buyFlash"), 300);
+
+    let rect = el.getBoundingClientRect();
+    floatText(text, rect.left + 50, rect.top);
+}
+
+// ===== CLICK =====
+orb.onclick = (e) => {
+    let gain = clickPower * prestige;
+    energy += gain;
+    totalEnergy += gain;
+    floatText("+" + gain, e.clientX, e.clientY);
+    update();
+};
+
 // ===== UPGRADES =====
-function buyGen() {
+function buyGen(el) {
     if (energy >= genCost) {
         energy -= genCost;
         generators++;
         genCost *= 1.5;
+        buyEffect(el, "+1 ⚙️");
         update();
     }
 }
 
-function buyFactory() {
+function buyFactory(el) {
     if (energy >= facCost) {
         energy -= facCost;
         factories++;
         facCost *= 1.7;
+        buyEffect(el, "+1 🏭");
         update();
     }
 }
 
-function buyClick() {
+function buyClick(el) {
     if (energy >= clickCost) {
         energy -= clickCost;
         clickPower++;
         clickCost *= 1.4;
+        buyEffect(el, "+Click");
         update();
     }
 }
@@ -169,15 +229,12 @@ setInterval(() => {
     update();
 }, 1000);
 
-// ===== GOLDEN ORB =====
-let golden = document.getElementById("golden");
-
+// ===== GOLDEN =====
 setInterval(() => {
     if (Math.random() < 0.3) {
         golden.style.display = "block";
         golden.style.left = Math.random() * window.innerWidth + "px";
         golden.style.top = Math.random() * window.innerHeight + "px";
-
         setTimeout(() => golden.style.display = "none", 5000);
     }
 }, 10000);
@@ -185,18 +242,16 @@ setInterval(() => {
 golden.onclick = () => {
     let bonus = Math.floor(energy * 0.25 + 50);
     energy += bonus;
+    alert("🌟 BONUS +" + bonus);
     golden.style.display = "none";
-    alert("🌟 CHAOS BONUS! +" + bonus);
 };
 
 // ===== ACHIEVEMENTS =====
 function checkAchievements() {
     let list = "";
 
-    function unlock(name, condition) {
-        if (condition && !achieved.includes(name)) {
-            achieved.push(name);
-        }
+    function unlock(name, cond) {
+        if (cond && !achieved.includes(name)) achieved.push(name);
     }
 
     unlock("100 Energy", totalEnergy >= 100);
@@ -204,24 +259,21 @@ function checkAchievements() {
     unlock("10 Generators", generators >= 10);
 
     achieved.forEach(a => list += "🏆 " + a + "<br>");
-    document.getElementById("achievements").innerHTML = list;
+    achievements.innerHTML = list;
 }
 
 // ===== PRESTIGE =====
 function prestigeReset() {
     if (totalEnergy >= 10000) {
-        prestige += 1;
-
+        prestige++;
         energy = 0;
         generators = 0;
         factories = 0;
         clickPower = 1;
-
         genCost = 50;
         facCost = 250;
         clickCost = 25;
-
-        alert("🌌 You ascended! Permanent boost gained.");
+        alert("🌌 Ascended!");
         update();
     }
 }
@@ -229,19 +281,14 @@ function prestigeReset() {
 // ===== SAVE =====
 function save() {
     localStorage.setItem("chaosSave", JSON.stringify({
-        energy, totalEnergy, clickPower,
-        generators, factories, prestige,
-        genCost, facCost, clickCost, achieved
+        energy,totalEnergy,clickPower,generators,factories,prestige,
+        genCost,facCost,clickCost,achieved
     }));
 }
-
 function load() {
     let data = JSON.parse(localStorage.getItem("chaosSave"));
-    if (data) {
-        Object.assign(window, data);
-    }
+    if (data) Object.assign(window, data);
 }
-
 setInterval(save, 3000);
 load();
 
@@ -250,6 +297,19 @@ function resetGame() {
     localStorage.clear();
     location.reload();
 }
+
+// refs
+let score = document.getElementById("score");
+let eps = document.getElementById("eps");
+let prestigeText = document.getElementById("prestige");
+
+let genCostEl = document.getElementById("genCost");
+let facCostEl = document.getElementById("facCost");
+let clickCostEl = document.getElementById("clickCost");
+
+let orb = document.getElementById("orb");
+let golden = document.getElementById("golden");
+let achievements = document.getElementById("achievements");
 
 // init
 update();
