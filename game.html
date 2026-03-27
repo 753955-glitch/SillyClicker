@@ -10,12 +10,13 @@
         background: linear-gradient(to right, #1e1e2f, #2c2c54);
         color: white;
         overflow: hidden;
+        user-select: none; /* ✅ FIX highlight issue */
     }
 
     #orb {
         font-size: 100px;
         cursor: pointer;
-        position: relative;
+        user-select: none;
     }
 
     #score, #eps {
@@ -45,14 +46,8 @@
     }
 
     @keyframes floatUp {
-        0% {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-        100% {
-            opacity: 0;
-            transform: translateY(-50px) scale(1.5);
-        }
+        0% { opacity: 1; transform: translateY(0) scale(1); }
+        100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
     }
 </style>
 </head>
@@ -72,36 +67,62 @@
 </div>
 
 <div class="upgrade" onclick="buyGenerator()">
-    Chaos Generator (+1/sec) - Cost: <span id="genCost">50</span>
+    Generator (+1/sec) - Cost: <span id="genCost">50</span>
 </div>
 
-<div class="upgrade" onclick="buyOverload()">
-    Overload Boost (x2 passive) - Cost: <span id="overCost">200</span>
+<div class="upgrade" onclick="buyFactory()">
+    Factory (+5/sec) - Cost: <span id="factoryCost">250</span>
+</div>
+
+<div class="upgrade" onclick="buyMegaClick()">
+    Mega Click (+10 click) - Cost: <span id="megaCost">500</span>
+</div>
+
+<div class="upgrade" onclick="buyAutoBoost()">
+    Auto Booster (x2 generators) - Cost: <span id="boostCost">800</span>
+</div>
+
+<div class="upgrade" onclick="activateStorm()">
+    Storm Mode (x3 ALL for 10s) - Cost: <span id="stormCost">1000</span>
 </div>
 
 <script>
 let energy = 0;
+
+// stats
 let clickPower = 1;
 let generators = 0;
-let passiveMultiplier = 1;
+let factories = 0;
+let generatorBoost = 1;
 
+// costs
 let clickCost = 25;
 let genCost = 50;
-let overCost = 200;
+let factoryCost = 250;
+let megaCost = 500;
+let boostCost = 800;
+let stormCost = 1000;
+
+let stormActive = false;
 
 function getEPS() {
-    return generators * passiveMultiplier;
+    let base = (generators * 1 + factories * 5) * generatorBoost;
+    return stormActive ? base * 3 : base;
 }
 
 function update() {
     document.getElementById("score").innerText = "Chaos Energy: " + Math.floor(energy);
     document.getElementById("eps").innerText = "Energy/sec: " + getEPS();
+
     document.getElementById("clickCost").innerText = clickCost;
     document.getElementById("genCost").innerText = genCost;
-    document.getElementById("overCost").innerText = overCost;
+    document.getElementById("factoryCost").innerText = factoryCost;
+    document.getElementById("megaCost").innerText = megaCost;
+    document.getElementById("boostCost").innerText = boostCost;
+    document.getElementById("stormCost").innerText = stormCost;
 }
 
-// Spark effect
+// spark
 function createSpark(x, y) {
     let spark = document.createElement("div");
     spark.className = "spark";
@@ -111,19 +132,18 @@ function createSpark(x, y) {
     spark.style.top = y + "px";
 
     document.body.appendChild(spark);
-
     setTimeout(() => spark.remove(), 600);
 }
 
-// Clicking
+// click
 document.getElementById("orb").onclick = (e) => {
-    energy += clickPower;
+    let power = stormActive ? clickPower * 3 : clickPower;
+    energy += power;
     update();
-
     createSpark(e.clientX, e.clientY);
 };
 
-// Upgrades
+// upgrades
 function buyClickPower() {
     if (energy >= clickCost) {
         energy -= clickCost;
@@ -142,22 +162,53 @@ function buyGenerator() {
     }
 }
 
-function buyOverload() {
-    if (energy >= overCost) {
-        energy -= overCost;
-        passiveMultiplier *= 2;
-        overCost = Math.floor(overCost * 2);
+function buyFactory() {
+    if (energy >= factoryCost) {
+        energy -= factoryCost;
+        factories++;
+        factoryCost = Math.floor(factoryCost * 1.7);
         update();
     }
 }
 
-// Passive income loop
+function buyMegaClick() {
+    if (energy >= megaCost) {
+        energy -= megaCost;
+        clickPower += 10;
+        megaCost = Math.floor(megaCost * 2);
+        update();
+    }
+}
+
+function buyAutoBoost() {
+    if (energy >= boostCost) {
+        energy -= boostCost;
+        generatorBoost *= 2;
+        boostCost = Math.floor(boostCost * 2.2);
+        update();
+    }
+}
+
+function activateStorm() {
+    if (energy >= stormCost && !stormActive) {
+        energy -= stormCost;
+        stormActive = true;
+        update();
+
+        setTimeout(() => {
+            stormActive = false;
+            update();
+        }, 10000);
+    }
+}
+
+// passive
 setInterval(() => {
     energy += getEPS();
     update();
 }, 1000);
 
-// Init
+// init
 update();
 </script>
 
