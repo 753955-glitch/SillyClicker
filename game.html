@@ -19,6 +19,13 @@ body {
     margin: 20px;
 }
 
+.tabs button {
+    margin: 5px;
+    padding: 8px;
+    cursor: pointer;
+}
+
+/* SHOP */
 .shopTab {
     display: none;
     width: 320px;
@@ -36,25 +43,26 @@ body {
     padding: 10px;
     border-radius: 8px;
     cursor: pointer;
+    transition: 0.2s;
 }
+.upgrade:hover { background: #666; }
 
-.upgrade:hover {
-    background: #666;
-}
-
-.tabs button {
-    margin: 5px;
-    padding: 8px;
-}
-
+/* FLOAT */
 .float {
     position: absolute;
     color: yellow;
     animation: floatUp 1s forwards;
 }
-
 @keyframes floatUp {
     to { transform: translateY(-60px); opacity: 0; }
+}
+
+/* GOLDEN */
+#golden {
+    position: absolute;
+    font-size: 60px;
+    display: none;
+    cursor: pointer;
 }
 </style>
 </head>
@@ -65,111 +73,225 @@ body {
 
 <div id="score"></div>
 <div id="eps"></div>
+<div id="prestige"></div>
 
 <div id="orb">⚡</div>
+<div id="golden">🌟</div>
 
 <div class="tabs">
-<button onclick="openTab('buildings')">Buildings</button>
-<button onclick="openTab('upgrades')">Upgrades</button>
+<button onclick="openTab('buildings')">🏭 Buildings</button>
+<button onclick="openTab('upgrades')">⬆️ Upgrades</button>
+<button onclick="openTab('special')">✨ Special</button>
 </div>
 
+<!-- BUILDINGS -->
 <div id="buildings" class="shopTab">
 <div class="upgrade" onclick="buyGen()">Generator (<span id="genCost"></span>)</div>
+<div class="upgrade" id="factoryBox" onclick="buyFactory()" style="display:none;">Factory (<span id="facCost"></span>)</div>
 </div>
 
+<!-- UPGRADES -->
 <div id="upgrades" class="shopTab">
 <div class="upgrade" onclick="buyClick()">Click Power (<span id="clickCost"></span>)</div>
 </div>
 
+<!-- SPECIAL -->
+<div id="special" class="shopTab">
+<div class="upgrade" onclick="prestigeReset()">🌌 Prestige</div>
+<div class="upgrade" onclick="resetGame()">⚠️ Reset</div>
+</div>
+
+<h3>Achievements</h3>
+<div id="achievements"></div>
+
 <script>
 // ===== DATA =====
-let energy = 0;
-let clickPower = 1;
-let generators = 0;
+let energy = 0, totalEnergy = 0;
+let clickPower = 1, generators = 0, factories = 0;
+let prestige = 1;
 
-let genCost = 50;
-let clickCost = 25;
+let genCost = 50, facCost = 250, clickCost = 25;
+let achieved = [];
 
-// ===== SAFE SOUND FUNCTION =====
-function playSound(url) {
-    try {
-        let s = new Audio(url);
-        s.volume = 0.3;
-        s.play().catch(() => {});
-    } catch {}
+// ===== SAFE SOUND =====
+function playSound(url){
+    try{
+        let s=new Audio(url);
+        s.volume=0.2;
+        s.play().catch(()=>{});
+    }catch{}
 }
 
-// ===== UPDATE =====
-function getEPS() {
-    return generators;
+// ===== CORE =====
+function getEPS(){
+    return (generators + factories*5) * prestige;
 }
 
-function update() {
+function update(){
     document.getElementById("score").innerText = "Energy: " + Math.floor(energy);
     document.getElementById("eps").innerText = "EPS: " + getEPS();
+    document.getElementById("prestige").innerText = "Prestige x" + prestige;
 
     document.getElementById("genCost").innerText = Math.floor(genCost);
+    document.getElementById("facCost").innerText = Math.floor(facCost);
     document.getElementById("clickCost").innerText = Math.floor(clickCost);
+
+    // unlock factory
+    if(totalEnergy >= 500){
+        document.getElementById("factoryBox").style.display = "block";
+    }
+
+    checkAchievements();
 }
 
-// ===== CLICK FIXED =====
-document.getElementById("orb").addEventListener("click", function(e) {
-    let gain = clickPower;
+// ===== CLICK =====
+document.getElementById("orb").addEventListener("click", function(e){
+    let gain = clickPower * prestige;
     energy += gain;
+    totalEnergy += gain;
 
-    floatText("+" + gain, e.clientX, e.clientY);
-
+    floatText("+"+gain, e.clientX, e.clientY);
     playSound("https://www.myinstants.com/media/sounds/mouse-click.mp3");
 
     update();
 });
 
 // ===== FLOAT =====
-function floatText(text, x, y) {
-    let el = document.createElement("div");
-    el.className = "float";
-    el.innerText = text;
-    el.style.left = x + "px";
-    el.style.top = y + "px";
+function floatText(text,x,y){
+    let el=document.createElement("div");
+    el.className="float";
+    el.innerText=text;
+    el.style.left=x+"px";
+    el.style.top=y+"px";
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 1000);
+    setTimeout(()=>el.remove(),1000);
 }
 
 // ===== UPGRADES =====
-function buyGen() {
-    if (energy >= genCost) {
-        energy -= genCost;
+function buyGen(){
+    if(energy>=genCost){
+        energy-=genCost;
         generators++;
-        genCost *= 1.5;
-
+        genCost*=1.5;
         playSound("https://www.myinstants.com/media/sounds/cash-register.mp3");
-
         update();
     }
 }
 
-function buyClick() {
-    if (energy >= clickCost) {
-        energy -= clickCost;
-        clickPower++;
-        clickCost *= 1.4;
-
+function buyFactory(){
+    if(energy>=facCost){
+        energy-=facCost;
+        factories++;
+        facCost*=1.7;
         playSound("https://www.myinstants.com/media/sounds/cash-register.mp3");
+        update();
+    }
+}
 
+function buyClick(){
+    if(energy>=clickCost){
+        energy-=clickCost;
+        clickPower++;
+        clickCost*=1.4;
+        playSound("https://www.myinstants.com/media/sounds/cash-register.mp3");
         update();
     }
 }
 
 // ===== PASSIVE =====
-setInterval(() => {
-    energy += getEPS();
+setInterval(()=>{
+    let gain=getEPS();
+    energy+=gain;
+    totalEnergy+=gain;
     update();
-}, 1000);
+},1000);
+
+// ===== GOLDEN =====
+setInterval(()=>{
+    if(Math.random()<0.3){
+        let g=document.getElementById("golden");
+        g.style.display="block";
+        g.style.left=Math.random()*window.innerWidth+"px";
+        g.style.top=Math.random()*window.innerHeight+"px";
+        setTimeout(()=>g.style.display="none",5000);
+    }
+},10000);
+
+document.getElementById("golden").onclick=function(){
+    let bonus=Math.floor(energy*0.25+50);
+    energy+=bonus;
+    alert("🌟 BONUS +"+bonus);
+    this.style.display="none";
+};
+
+// ===== ACHIEVEMENTS =====
+function checkAchievements(){
+    let list="";
+    function unlock(name,cond){
+        if(cond && !achieved.includes(name)) achieved.push(name);
+    }
+
+    unlock("100 Energy", totalEnergy>=100);
+    unlock("1k Energy", totalEnergy>=1000);
+    unlock("First Factory", factories>=1);
+
+    achieved.forEach(a=>list+="🏆 "+a+"<br>");
+    document.getElementById("achievements").innerHTML=list;
+}
+
+// ===== PRESTIGE =====
+function prestigeReset(){
+    if(totalEnergy>=10000){
+        prestige++;
+        energy=0;
+        generators=0;
+        factories=0;
+        clickPower=1;
+        genCost=50;
+        facCost=250;
+        clickCost=25;
+        alert("🌌 Ascended!");
+        update();
+    }
+}
+
+// ===== SAVE =====
+function save(){
+    localStorage.setItem("chaosSave", JSON.stringify({
+        energy,totalEnergy,clickPower,generators,factories,prestige,
+        genCost,facCost,clickCost,achieved
+    }));
+}
+
+function load(){
+    let data = JSON.parse(localStorage.getItem("chaosSave"));
+    if(data){
+        energy = data.energy || 0;
+        totalEnergy = data.totalEnergy || 0;
+        clickPower = data.clickPower || 1;
+        generators = data.generators || 0;
+        factories = data.factories || 0;
+        prestige = data.prestige || 1;
+        genCost = data.genCost || 50;
+        facCost = data.facCost || 250;
+        clickCost = data.clickCost || 25;
+        achieved = data.achieved || [];
+    }
+}
+
+setInterval(save,3000);
+load();
+
+// ===== RESET =====
+function resetGame(){
+    localStorage.clear();
+    location.reload();
+}
 
 // ===== TABS =====
-function openTab(name) {
-    document.querySelectorAll(".shopTab").forEach(t => t.style.display = "none");
-    document.getElementById(name).style.display = "block";
+function openTab(name){
+    document.querySelectorAll(".shopTab").forEach(t=>t.style.display="none");
+    document.getElementById(name).style.display="block";
 }
 
 // init
