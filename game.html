@@ -13,77 +13,75 @@ body {
     user-select: none;
 }
 
-/* TOP UI */
-#score, #eps, #prestige {
-    margin: 5px;
-}
-
 /* ORB */
 #orb {
     font-size: 100px;
     cursor: pointer;
     margin: 20px;
-    transition: transform 0.1s;
 }
-#orb:active {
-    transform: scale(0.9);
+
+/* TOP */
+#score, #eps, #prestige {
+    margin: 5px;
+}
+
+/* TABS */
+.tabs button {
+    padding: 8px;
+    margin: 5px;
+    cursor: pointer;
 }
 
 /* SHOP */
-#shop {
+.shopTab {
+    display: none;
     width: 320px;
-    height: 250px;
-    margin: 20px auto;
+    height: 260px;
+    margin: auto;
     overflow-y: auto;
     border: 2px solid #555;
     border-radius: 10px;
     background: #222;
-    padding: 10px;
 }
 
 /* UPGRADE */
 .upgrade {
     background: #444;
-    padding: 10px;
     margin: 8px;
-    cursor: pointer;
+    padding: 10px;
     border-radius: 8px;
-    transition: 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    cursor: pointer;
+    position: relative;
 }
 
 .upgrade:hover {
     background: #666;
-    transform: scale(1.03);
 }
 
-/* ICON */
-.icon {
-    font-size: 24px;
-    margin-right: 10px;
+/* TOOLTIP */
+.tooltip {
+    display: none;
+    position: absolute;
+    background: black;
+    padding: 5px;
+    font-size: 12px;
+    top: -5px;
+    left: 105%;
+    width: 150px;
 }
 
-/* FLOAT TEXT */
+.upgrade:hover .tooltip {
+    display: block;
+}
+
+/* FLOAT */
 .float {
     position: absolute;
     color: yellow;
-    pointer-events: none;
     animation: floatUp 1s forwards;
 }
-
 @keyframes floatUp {
     to { transform: translateY(-60px); opacity: 0; }
-}
-
-/* BUY FLASH */
-.buyFlash {
-    animation: flash 0.3s;
-}
-@keyframes flash {
-    0% { background: #0f0; }
-    100% { background: #444; }
 }
 
 /* GOLDEN */
@@ -100,218 +98,238 @@ body {
 
 <h1>Chaos Clicker ⚡</h1>
 
-<div id="score">Energy: 0</div>
-<div id="eps">EPS: 0</div>
-<div id="prestige">Prestige x1</div>
+<div id="score"></div>
+<div id="eps"></div>
+<div id="prestige"></div>
 
 <div id="orb">⚡</div>
 <div id="golden">🌟</div>
 
-<h2>Shop</h2>
+<!-- TABS -->
+<div class="tabs">
+<button onclick="openTab('buildings')">🏭 Buildings</button>
+<button onclick="openTab('upgrades')">⬆️ Upgrades</button>
+<button onclick="openTab('special')">✨ Special</button>
+</div>
 
-<div id="shop">
-
+<!-- BUILDINGS -->
+<div id="buildings" class="shopTab">
 <div class="upgrade" onclick="buyGen(this)">
-    <span><span class="icon">⚙️</span> Generator</span>
-    <span id="genCost">50</span>
+⚙️ Generator (<span id="genCost"></span>)
+<div class="tooltip">Produces 1 energy/sec</div>
 </div>
 
-<div class="upgrade" onclick="buyFactory(this)">
-    <span><span class="icon">🏭</span> Factory</span>
-    <span id="facCost">250</span>
+<div class="upgrade" id="factoryBox" onclick="buyFactory(this)" style="display:none;">
+🏭 Factory (<span id="facCost"></span>)
+<div class="tooltip">Produces 5 energy/sec</div>
+</div>
 </div>
 
+<!-- UPGRADES -->
+<div id="upgrades" class="shopTab">
 <div class="upgrade" onclick="buyClick(this)">
-    <span><span class="icon">👆</span> Click Power</span>
-    <span id="clickCost">25</span>
+👆 Click Power (<span id="clickCost"></span>)
+<div class="tooltip">Increase click strength</div>
+</div>
 </div>
 
+<!-- SPECIAL -->
+<div id="special" class="shopTab">
+<div class="upgrade" onclick="prestigeReset()">
+🌌 Prestige
+<div class="tooltip">Reset for permanent multiplier</div>
 </div>
 
-<h2>Other</h2>
-<div class="upgrade" onclick="prestigeReset()">🌌 Prestige</div>
-<div class="upgrade" onclick="resetGame()">⚠️ Reset</div>
+<div class="upgrade" onclick="resetGame()">
+⚠️ Reset
+<div class="tooltip">Delete all progress</div>
+</div>
+</div>
 
 <h3>Achievements</h3>
 <div id="achievements"></div>
 
 <script>
+// ===== AUDIO =====
+let clickSound = new Audio("https://www.myinstants.com/media/sounds/mouse-click.mp3");
+let buySound = new Audio("https://www.myinstants.com/media/sounds/cash-register.mp3");
+
+// ===== DATA =====
 let energy = 0, totalEnergy = 0;
 let clickPower = 1, generators = 0, factories = 0;
 let prestige = 1;
 
 let genCost = 50, facCost = 250, clickCost = 25;
-
 let achieved = [];
 
-// ===== UPDATE =====
-function getEPS() {
-    return (generators + factories * 5) * prestige;
-}
-
+// ===== UI =====
 function update() {
-    score.innerText = "Energy: " + Math.floor(energy);
-    eps.innerText = "EPS: " + getEPS();
-    prestigeText.innerText = "Prestige x" + prestige;
+score.innerText = "Energy: " + Math.floor(energy);
+eps.innerText = "EPS: " + getEPS();
+prestigeText.innerText = "Prestige x" + prestige;
 
-    genCostEl.innerText = Math.floor(genCost);
-    facCostEl.innerText = Math.floor(facCost);
-    clickCostEl.innerText = Math.floor(clickCost);
+genCostEl.innerText = Math.floor(genCost);
+facCostEl.innerText = Math.floor(facCost);
+clickCostEl.innerText = Math.floor(clickCost);
 
-    checkAchievements();
+// unlock factory
+if (totalEnergy >= 500) {
+    document.getElementById("factoryBox").style.display = "block";
 }
 
-// ===== FLOAT TEXT =====
-function floatText(text, x, y) {
-    let el = document.createElement("div");
-    el.className = "float";
-    el.innerText = text;
-    el.style.left = x + "px";
-    el.style.top = y + "px";
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 1000);
+checkAchievements();
 }
 
-// ===== BUY EFFECT =====
-function buyEffect(el, text) {
-    el.classList.add("buyFlash");
-    setTimeout(() => el.classList.remove("buyFlash"), 300);
-
-    let rect = el.getBoundingClientRect();
-    floatText(text, rect.left + 50, rect.top);
+function getEPS() {
+return (generators + factories * 5) * prestige;
 }
 
 // ===== CLICK =====
 orb.onclick = (e) => {
-    let gain = clickPower * prestige;
-    energy += gain;
-    totalEnergy += gain;
-    floatText("+" + gain, e.clientX, e.clientY);
-    update();
+let gain = clickPower * prestige;
+energy += gain;
+totalEnergy += gain;
+
+clickSound.currentTime = 0;
+clickSound.play();
+
+floatText("+" + gain, e.clientX, e.clientY);
+update();
 };
 
-// ===== UPGRADES =====
-function buyGen(el) {
-    if (energy >= genCost) {
-        energy -= genCost;
-        generators++;
-        genCost *= 1.5;
-        buyEffect(el, "+1 ⚙️");
-        update();
-    }
+// ===== FLOAT =====
+function floatText(text,x,y){
+let el=document.createElement("div");
+el.className="float";
+el.innerText=text;
+el.style.left=x+"px";
+el.style.top=y+"px";
+document.body.appendChild(el);
+setTimeout(()=>el.remove(),1000);
 }
 
-function buyFactory(el) {
-    if (energy >= facCost) {
-        energy -= facCost;
-        factories++;
-        facCost *= 1.7;
-        buyEffect(el, "+1 🏭");
-        update();
-    }
+// ===== SHOP =====
+function buyGen(el){
+if(energy>=genCost){
+energy-=genCost;
+generators++;
+genCost*=1.5;
+buySound.play();
+update();
+}
 }
 
-function buyClick(el) {
-    if (energy >= clickCost) {
-        energy -= clickCost;
-        clickPower++;
-        clickCost *= 1.4;
-        buyEffect(el, "+Click");
-        update();
-    }
+function buyFactory(el){
+if(energy>=facCost){
+energy-=facCost;
+factories++;
+facCost*=1.7;
+buySound.play();
+update();
+}
+}
+
+function buyClick(el){
+if(energy>=clickCost){
+energy-=clickCost;
+clickPower++;
+clickCost*=1.4;
+buySound.play();
+update();
+}
 }
 
 // ===== PASSIVE =====
-setInterval(() => {
-    let gain = getEPS();
-    energy += gain;
-    totalEnergy += gain;
-    update();
-}, 1000);
+setInterval(()=>{
+let gain=getEPS();
+energy+=gain;
+totalEnergy+=gain;
+update();
+},1000);
 
 // ===== GOLDEN =====
-setInterval(() => {
-    if (Math.random() < 0.3) {
-        golden.style.display = "block";
-        golden.style.left = Math.random() * window.innerWidth + "px";
-        golden.style.top = Math.random() * window.innerHeight + "px";
-        setTimeout(() => golden.style.display = "none", 5000);
-    }
-}, 10000);
+setInterval(()=>{
+if(Math.random()<0.3){
+golden.style.display="block";
+golden.style.left=Math.random()*window.innerWidth+"px";
+golden.style.top=Math.random()*window.innerHeight+"px";
+setTimeout(()=>golden.style.display="none",5000);
+}
+},10000);
 
-golden.onclick = () => {
-    let bonus = Math.floor(energy * 0.25 + 50);
-    energy += bonus;
-    alert("🌟 BONUS +" + bonus);
-    golden.style.display = "none";
+golden.onclick=()=>{
+let bonus=Math.floor(energy*0.25+50);
+energy+=bonus;
+alert("🌟 BONUS "+bonus);
+golden.style.display="none";
 };
 
 // ===== ACHIEVEMENTS =====
-function checkAchievements() {
-    let list = "";
+function checkAchievements(){
+let list="";
+function unlock(name,cond){
+if(cond&&!achieved.includes(name)) achieved.push(name);
+}
+unlock("100 Energy",totalEnergy>=100);
+unlock("1k Energy",totalEnergy>=1000);
+unlock("First Factory",factories>=1);
 
-    function unlock(name, cond) {
-        if (cond && !achieved.includes(name)) achieved.push(name);
-    }
-
-    unlock("100 Energy", totalEnergy >= 100);
-    unlock("1k Energy", totalEnergy >= 1000);
-    unlock("10 Generators", generators >= 10);
-
-    achieved.forEach(a => list += "🏆 " + a + "<br>");
-    achievements.innerHTML = list;
+achieved.forEach(a=>list+="🏆 "+a+"<br>");
+achievements.innerHTML=list;
 }
 
 // ===== PRESTIGE =====
-function prestigeReset() {
-    if (totalEnergy >= 10000) {
-        prestige++;
-        energy = 0;
-        generators = 0;
-        factories = 0;
-        clickPower = 1;
-        genCost = 50;
-        facCost = 250;
-        clickCost = 25;
-        alert("🌌 Ascended!");
-        update();
-    }
+function prestigeReset(){
+if(totalEnergy>=10000){
+prestige++;
+energy=0; generators=0; factories=0; clickPower=1;
+genCost=50; facCost=250; clickCost=25;
+alert("🌌 Ascended!");
+update();
+}
 }
 
 // ===== SAVE =====
-function save() {
-    localStorage.setItem("chaosSave", JSON.stringify({
-        energy,totalEnergy,clickPower,generators,factories,prestige,
-        genCost,facCost,clickCost,achieved
-    }));
+function save(){
+localStorage.setItem("chaosSave",JSON.stringify({
+energy,totalEnergy,clickPower,generators,factories,prestige,
+genCost,facCost,clickCost,achieved
+}));
 }
-function load() {
-    let data = JSON.parse(localStorage.getItem("chaosSave"));
-    if (data) Object.assign(window, data);
+function load(){
+let data=JSON.parse(localStorage.getItem("chaosSave"));
+if(data) Object.assign(window,data);
 }
-setInterval(save, 3000);
+setInterval(save,3000);
 load();
 
 // ===== RESET =====
-function resetGame() {
-    localStorage.clear();
-    location.reload();
+function resetGame(){
+localStorage.clear();
+location.reload();
+}
+
+// ===== TABS =====
+function openTab(name){
+document.querySelectorAll(".shopTab").forEach(t=>t.style.display="none");
+document.getElementById(name).style.display="block";
 }
 
 // refs
-let score = document.getElementById("score");
-let eps = document.getElementById("eps");
-let prestigeText = document.getElementById("prestige");
+let score=document.getElementById("score");
+let eps=document.getElementById("eps");
+let prestigeText=document.getElementById("prestige");
 
-let genCostEl = document.getElementById("genCost");
-let facCostEl = document.getElementById("facCost");
-let clickCostEl = document.getElementById("clickCost");
+let genCostEl=document.getElementById("genCost");
+let facCostEl=document.getElementById("facCost");
+let clickCostEl=document.getElementById("clickCost");
 
-let orb = document.getElementById("orb");
-let golden = document.getElementById("golden");
-let achievements = document.getElementById("achievements");
+let orb=document.getElementById("orb");
+let golden=document.getElementById("golden");
+let achievements=document.getElementById("achievements");
 
 // init
+openTab('buildings');
 update();
 </script>
 
