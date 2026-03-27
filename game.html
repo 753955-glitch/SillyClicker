@@ -2,114 +2,171 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Silly Clicker</title>
+<title>Chaos Clicker ⚡</title>
 <style>
     body {
-        font-family: Arial, sans-serif;
+        font-family: Arial;
         text-align: center;
-        background: #f0f8ff;
+        background: linear-gradient(to right, #1e1e2f, #2c2c54);
+        color: white;
     }
 
     h1 {
         margin-top: 20px;
     }
 
-    #smiley {
+    #orb {
         font-size: 100px;
         cursor: pointer;
         transition: transform 0.1s;
     }
 
-    #smiley:active {
-        transform: scale(0.9);
+    #orb:active {
+        transform: scale(0.85);
     }
 
     #score {
-        font-size: 30px;
+        font-size: 28px;
         margin: 20px;
     }
 
     .upgrade {
-        margin: 10px;
+        background: #444;
         padding: 10px;
-        background: #fff;
-        border: 2px solid #ccc;
-        cursor: pointer;
+        margin: 10px;
         display: inline-block;
+        cursor: pointer;
+        border-radius: 8px;
     }
 
     .upgrade:hover {
-        background: #e0f7ff;
+        background: #666;
+    }
+
+    #eventLog {
+        margin-top: 20px;
+        font-size: 14px;
+        color: #ccc;
     }
 </style>
 </head>
 <body>
 
-<h1>Silly Clicker 😀</h1>
+<h1>Chaos Clicker ⚡</h1>
 
-<div id="score">Clicks: 0</div>
+<div id="score">Chaos Energy: 0</div>
 
-<div id="smiley">😀</div>
+<div id="orb">⚡</div>
 
 <h2>Upgrades</h2>
 
-<div class="upgrade" onclick="buyMultiplier()">
-    Multiplier (x2) - Cost: <span id="multCost">50</span>
+<div class="upgrade" onclick="buyClickPower()">
+    Stronger Click (+1) - Cost: <span id="clickCost">25</span>
 </div>
 
-<div class="upgrade" onclick="buyAutoClicker()">
-    Auto Clicker (+1/sec) - Cost: <span id="autoCost">100</span>
+<div class="upgrade" onclick="buyGenerator()">
+    Chaos Generator (+1/sec) - Cost: <span id="genCost">50</span>
 </div>
+
+<div class="upgrade" onclick="buyOverload()">
+    Overload Boost (x2 passive) - Cost: <span id="overCost">200</span>
+</div>
+
+<div id="eventLog">Welcome to chaos...</div>
 
 <script>
-let clicks = 0;
-let multiplier = 1;
-let autoClickers = 0;
+let energy = 0;
+let clickPower = 1;
+let generators = 0;
+let passiveMultiplier = 1;
 
-let multCost = 50;
-let autoCost = 100;
+let clickCost = 25;
+let genCost = 50;
+let overCost = 200;
 
-// Update display
-function updateDisplay() {
-    document.getElementById("score").innerText = "Clicks: " + clicks;
-    document.getElementById("multCost").innerText = multCost;
-    document.getElementById("autoCost").innerText = autoCost;
+function update() {
+    document.getElementById("score").innerText = "Chaos Energy: " + Math.floor(energy);
+    document.getElementById("clickCost").innerText = clickCost;
+    document.getElementById("genCost").innerText = genCost;
+    document.getElementById("overCost").innerText = overCost;
 }
 
-// Clicking the smiley
-document.getElementById("smiley").addEventListener("click", () => {
-    clicks += multiplier;
-    updateDisplay();
-});
+// Clicking
+document.getElementById("orb").onclick = () => {
+    energy += clickPower;
+    update();
+};
 
-// Buy multiplier
-function buyMultiplier() {
-    if (clicks >= multCost) {
-        clicks -= multCost;
-        multiplier *= 2;
-        multCost = Math.floor(multCost * 1.8);
-        updateDisplay();
+// Upgrades
+function buyClickPower() {
+    if (energy >= clickCost) {
+        energy -= clickCost;
+        clickPower++;
+        clickCost = Math.floor(clickCost * 1.5);
+        update();
     }
 }
 
-// Buy auto clicker
-function buyAutoClicker() {
-    if (clicks >= autoCost) {
-        clicks -= autoCost;
-        autoClickers += 1;
-        autoCost = Math.floor(autoCost * 1.7);
-        updateDisplay();
+function buyGenerator() {
+    if (energy >= genCost) {
+        energy -= genCost;
+        generators++;
+        genCost = Math.floor(genCost * 1.6);
+        update();
     }
 }
 
-// Auto clicking loop
+function buyOverload() {
+    if (energy >= overCost) {
+        energy -= overCost;
+        passiveMultiplier *= 2;
+        overCost = Math.floor(overCost * 2);
+        update();
+    }
+}
+
+// Passive income
 setInterval(() => {
-    clicks += autoClickers;
-    updateDisplay();
+    energy += generators * passiveMultiplier;
+    update();
 }, 1000);
 
-// Initial display
-updateDisplay();
+// 🔥 CHAOS EVENTS (the twist)
+setInterval(() => {
+    let eventChance = Math.random();
+
+    if (eventChance < 0.3) {
+        // bonus
+        let bonus = Math.floor(Math.random() * 50 + 20);
+        energy += bonus;
+        log("⚡ CHAOS SURGE! +" + bonus);
+    } 
+    else if (eventChance < 0.5) {
+        // penalty
+        let loss = Math.floor(Math.random() * 30 + 10);
+        energy = Math.max(0, energy - loss);
+        log("💀 Energy leak! -" + loss);
+    } 
+    else if (eventChance < 0.65) {
+        // temporary boost
+        clickPower *= 2;
+        log("🔥 Click frenzy! (5s)");
+        setTimeout(() => {
+            clickPower = Math.max(1, Math.floor(clickPower / 2));
+            log("Frenzy ended.");
+        }, 5000);
+    }
+
+    update();
+}, 8000);
+
+// Event log
+function log(msg) {
+    document.getElementById("eventLog").innerText = msg;
+}
+
+// Init
+update();
 </script>
 
 </body>
