@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rubber Chicken Chaos</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f8ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none;
+        }
+
+        #game-container {
+            text-align: center;
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        #chicken {
+            font-size: 100px;
+            cursor: pointer;
+            transition: transform 0.1s;
+            display: inline-block;
+        }
+
+        #chicken:active {
+            transform: scale(0.8) rotate(15deg);
+        }
+
+        .stats {
+            font-size: 1.5rem;
+            margin: 1rem 0;
+            font-weight: bold;
+            color: #333;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #ffcc00;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #ffaa00;
+        }
+
+        .upgrade-section {
+            margin-top: 20px;
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <h1>Rubber Chicken Chaos</h1>
+        <div id="chicken">🍗</div>
+        <div class="stats">Squeaks: <span id="score">0</span></div>
+        <div id="sps-display">Squeaks Per Second: 0</div>
+
+        <div class="upgrade-section">
+            <p>Hire a <strong>Cluck-bot</strong></p>
+            <button id="buy-upgrade">Cost: 10 Squeaks</button>
+        </div>
+    </div>
+
+    <script>
+        let squeaks = 0;
+        let cluckBots = 0;
+        let botCost = 10;
+
+        const scoreDisplay = document.getElementById('score');
+        const spsDisplay = document.getElementById('sps-display');
+        const chicken = document.getElementById('chicken');
+        const upgradeBtn = document.getElementById('buy-upgrade');
+
+        // Click the chicken
+        chicken.addEventListener('click', () => {
+            squeaks++;
+            updateDisplay();
+        });
+
+        // Buy an upgrade
+        upgradeBtn.addEventListener('click', () => {
+            if (squeaks >= botCost) {
+                squeaks -= botCost;
+                cluckBots++;
+                botCost = Math.floor(botCost * 1.5); // Price increases
+                updateDisplay();
+            }
+        });
+
+        // Game Loop (Runs every second)
+        setInterval(() => {
+            squeaks += cluckBots;
+            updateDisplay();
+        }, 1000);
+
+        function updateDisplay() {
+            scoreDisplay.innerText = squeaks;
+            spsDisplay.innerText = `Squeaks Per Second: ${cluckBots}`;
+            upgradeBtn.innerText = `Cost: ${botCost} Squeaks`;
+            upgradeBtn.disabled = squeaks < botCost;
+        }
+    </script>
+</body>
+</html>
