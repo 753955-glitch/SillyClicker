@@ -1,156 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Endless Runner</title>
-<style>
-    body {
-        margin: 0;
-        overflow: hidden;
-        background: #111;
-        color: white;
-        font-family: Arial, sans-serif;
-    }
-    canvas {
-        display: block;
-        margin: auto;
-        background: #222;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Interface</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        #chat-container { width: 400px; height: 600px; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
+        #messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg { padding: 10px 15px; border-radius: 18px; max-width: 80%; font-size: 14px; line-height: 1.4; }
+        .user { align-self: flex-end; background: #007bff; color: white; }
+        .ai { align-self: flex-start; background: #e9e9eb; color: #333; }
+        #input-area { border-top: 1px solid #ddd; padding: 15px; display: flex; gap: 10px; }
+        input { flex: 1; border: 1px solid #ccc; padding: 10px; border-radius: 20px; outline: none; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #0056b3; }
+    </style>
 </head>
 <body>
 
-<canvas id="gameCanvas" width="800" height="300"></canvas>
+<div id="chat-container">
+    <div id="messages">
+        <div class="msg ai">Hello! I'm your HTML-based assistant. How can I help you today?</div>
+    </div>
+    <div id="input-area">
+        <input type="text" id="user-input" placeholder="Type a message...">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
 
 <script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+    async function sendMessage() {
+        const input = document.getElementById('user-input');
+        const container = document.getElementById('messages');
+        
+        if (!input.value.trim()) return;
 
-let player = {
-    x: 50,
-    y: 200,
-    width: 40,
-    height: 40,
-    dy: 0,
-    gravity: 0.8,
-    jumpPower: -12,
-    grounded: true
-};
+        // Add User Message
+        const userDiv = document.createElement('div');
+        userDiv.className = 'msg user';
+        userDiv.textContent = input.value;
+        container.appendChild(userDiv);
 
-let obstacles = [];
-let speed = 5;
-let score = 0;
-let gameOver = false;
+        const prompt = input.value;
+        input.value = '';
 
-// Controls
-document.addEventListener("keydown", e => {
-    if (e.code === "Space" && player.grounded && !gameOver) {
-        player.dy = player.jumpPower;
-        player.grounded = false;
-    }
-    if (e.code === "Space" && gameOver) {
-        resetGame();
-    }
-});
+        // Placeholder for AI Logic
+        const aiDiv = document.createElement('div');
+        aiDiv.className = 'msg ai';
+        aiDiv.textContent = "...";
+        container.appendChild(aiDiv);
 
-function spawnObstacle() {
-    let height = 30 + Math.random() * 40;
-    obstacles.push({
-        x: canvas.width,
-        y: canvas.height - height,
-        width: 20,
-        height: height
-    });
-}
+        // Scroll to bottom
+        container.scrollTop = container.scrollHeight;
 
-function resetGame() {
-    obstacles = [];
-    speed = 5;
-    score = 0;
-    gameOver = false;
-    player.y = 200;
-    player.dy = 0;
-}
-
-function update() {
-    if (gameOver) return;
-
-    // Player physics
-    player.dy += player.gravity;
-    player.y += player.dy;
-
-    if (player.y >= 200) {
-        player.y = 200;
-        player.dy = 0;
-        player.grounded = true;
-    }
-
-    // Obstacles
-    if (Math.random() < 0.02) spawnObstacle();
-
-    obstacles.forEach((obs, i) => {
-        obs.x -= speed;
-
-        // Collision
-        if (
-            player.x < obs.x + obs.width &&
-            player.x + player.width > obs.x &&
-            player.y < obs.y + obs.height &&
-            player.y + player.height > obs.y
-        ) {
-            gameOver = true;
-        }
-
-        // Remove off-screen
-        if (obs.x + obs.width < 0) {
-            obstacles.splice(i, 1);
-            score++;
-        }
-    });
-
-    // Increase difficulty
-    speed += 0.002;
-}
-
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Ground
-    ctx.fillStyle = "#555";
-    ctx.fillRect(0, 240, canvas.width, 5);
-
-    // Player
-    ctx.fillStyle = "#00ffcc";
-    ctx.fillRect(player.x, player.y, player.width, player.height);
-
-    // Obstacles
-    ctx.fillStyle = "#ff4444";
-    obstacles.forEach(obs => {
-        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-    });
-
-    // Score
-    ctx.fillStyle = "white";
-    ctx.font = "20px Arial";
-    ctx.fillText("Score: " + score, 10, 30);
-
-    if (gameOver) {
-        ctx.fillStyle = "white";
-        ctx.font = "30px Arial";
-        ctx.fillText("GAME OVER", 300, 120);
-        ctx.font = "16px Arial";
-        ctx.fillText("Press SPACE to restart", 300, 150);
-    }
-}
-
-function gameLoop() {
-    update();
-    draw();
-    requestAnimationFrame(gameLoop);
-}
-
-gameLoop();
-</script>
-
-</body>
-</html>
+        // Note: To make this "smart," you would use fetch() here 
+        // to call an AI API like Gemini or OpenAI.
+        setTimeout(() => {
+            ai
